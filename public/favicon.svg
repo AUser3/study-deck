@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Studydeck">
+  <rect width="64" height="64" rx="14" fill="#2f6f70" />
+  <path d="M18 14h27a5 5 0 0 1 5 5v27a5 5 0 0 1-5 5H18a5 5 0 0 1-5-5V19a5 5 0 0 1 5-5Z" fill="#faf8f2" />
+  <path d="M22 23h19M22 31h19M22 39h12" fill="none" stroke="#2f6f70" stroke-linecap="round" stroke-width="4" />
+  <circle cx="43" cy="42" r="7" fill="#d6923b" />
+</svg>
