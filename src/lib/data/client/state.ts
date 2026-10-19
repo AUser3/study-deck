@@ -1,6 +1,12 @@
 import { useSyncExternalStore } from "react";
 
-import { loadStudyData, openStudyDataDirectory, saveStudyData } from "../app-data.functions";
+import {
+  createStudyBackup,
+  loadStudyData,
+  openStudyDataDirectory,
+  restoreStudyBackup,
+  saveStudyData,
+} from "../app-data.functions";
 import { EMPTY_CATALOG } from "../catalog";
 import { APP_STATE_VERSION } from "../types";
 import type { AppState } from "../types";
@@ -88,4 +94,17 @@ export function transact<T>(
 
 export function openDataDirectory(): Promise<void> {
   return openStudyDataDirectory();
+}
+
+export function exportDataBackup(): Promise<string> {
+  return createStudyBackup();
+}
+
+export function importDataBackup(raw: string): Promise<void> {
+  return enqueue(async () => {
+    state = await restoreStudyBackup({ data: raw });
+    ready = true;
+    loadError = null;
+    emitState();
+  });
 }

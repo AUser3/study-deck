@@ -1,10 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpenCheck, ChevronRight, FolderOpen, LoaderCircle } from "lucide-react";
-import { useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { BookOpenCheck, ChevronRight } from "lucide-react";
+import type { ReactNode } from "react";
 
-import { Button } from "@/components/ui/button";
-import { openDataDirectory } from "@/lib/data/store";
+import { DataActions } from "@/components/data-actions";
 
 export interface Crumb {
   label: string;
@@ -13,19 +11,6 @@ export interface Crumb {
 }
 
 export function AppShell({ crumbs = [], children }: { crumbs?: Crumb[]; children: ReactNode }) {
-  const [openingData, setOpeningData] = useState(false);
-
-  const handleOpenDataDirectory = async () => {
-    setOpeningData(true);
-    try {
-      await openDataDirectory();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not open the data folder.");
-    } finally {
-      setOpeningData(false);
-    }
-  };
-
   return (
     <div className="min-h-screen">
       <header className="border-b border-border bg-card/70 backdrop-blur">
@@ -62,24 +47,7 @@ export function AppShell({ crumbs = [], children }: { crumbs?: Crumb[]; children
               </ol>
             </nav>
           )}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="ml-auto shrink-0"
-            disabled={openingData}
-            onClick={handleOpenDataDirectory}
-            title="Open the folder where Studydeck stores all courses and progress"
-          >
-            {openingData ? (
-              <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden />
-            ) : (
-              <FolderOpen className="h-4 w-4" aria-hidden />
-            )}
-            <span>
-              Open data<span className="hidden sm:inline"> folder</span>
-            </span>
-          </Button>
+          <DataActions />
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>

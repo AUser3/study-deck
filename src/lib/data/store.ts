@@ -13,5 +13,11 @@ export {
   normalizeQuestion,
   updateQuestion,
 } from "./client/questions";
-export { getState, openDataDirectory, useAppState } from "./client/state";
+export {
+  exportDataBackup,
+  getState,
+  importDataBackup,
+  openDataDirectory,
+  useAppState,
+} from "./client/state";
 export { createTopic, deleteTopic, renameTopic } from "./client/topics";
