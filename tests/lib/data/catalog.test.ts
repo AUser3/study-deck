@@ -34,6 +34,7 @@ const catalog: Catalog = {
       updatedAt: 4,
     },
   ],
+  oldExams: [],
 };
 
 describe("catalog files", () => {

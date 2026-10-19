@@ -10,6 +10,7 @@ const state: AppState = {
   questions: [],
   attempts: [],
   notes: [],
+  oldExams: [],
 };
 
 describe("Studydeck backups", () => {

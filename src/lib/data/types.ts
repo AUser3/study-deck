@@ -1,6 +1,7 @@
 export type ID = string;
 export const MAX_ANSWER_CHOICES = 16;
-export const APP_STATE_VERSION = 3 as const;
+export const APP_STATE_VERSION = 4 as const;
+export const MAX_EXAM_DOCUMENT_BYTES = 20 * 1024 * 1024;
 
 export interface Course {
   id: ID;
@@ -50,6 +51,24 @@ export interface StudyNote {
   updatedAt: number;
 }
 
+export interface ManagedDocument {
+  storageName: string;
+  fileName: string;
+  mimeType: "application/pdf";
+  size: number;
+}
+
+export interface OldExam {
+  id: ID;
+  courseId: ID;
+  title: string;
+  year?: number;
+  description?: string;
+  document: ManagedDocument;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface AppState {
   version: typeof APP_STATE_VERSION;
   courses: Course[];
@@ -57,6 +76,7 @@ export interface AppState {
   questions: Question[];
   attempts: Attempt[];
   notes: StudyNote[];
+  oldExams: OldExam[];
 }
 
 export type QuestionInput = Omit<Question, "id" | "createdAt" | "answer"> & { answer?: string };

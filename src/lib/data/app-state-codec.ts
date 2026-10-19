@@ -97,12 +97,18 @@ function migrateVersionOne(value: Record<string, unknown>): unknown {
 
 function migrateVersionTwo(value: unknown): unknown {
   if (!isRecord(value) || value.version !== 2) return value;
-  return { ...value, version: APP_STATE_VERSION, notes: [] };
+  return { ...value, version: 3, notes: [] };
+}
+
+function migrateVersionThree(value: unknown): unknown {
+  if (!isRecord(value) || value.version !== 3) return value;
+  return { ...value, version: APP_STATE_VERSION, oldExams: [] };
 }
 
 export function migrateAppState(value: unknown): AppState {
   const versionTwo = isRecord(value) ? migrateVersionOne(value) : value;
-  const migrated = migrateVersionTwo(versionTwo);
+  const versionThree = migrateVersionTwo(versionTwo);
+  const migrated = migrateVersionThree(versionThree);
   return validateAppState(migrated);
 }
 
@@ -114,9 +120,10 @@ export function validateAppState(value: unknown): AppState {
     !Array.isArray(value.courses) ||
     !Array.isArray(value.topics) ||
     !Array.isArray(value.questions) ||
-    !Array.isArray(value.notes)
+    !Array.isArray(value.notes) ||
+    !Array.isArray(value.oldExams)
   ) {
-    return invalid("courses, topics, questions, and notes must be arrays.");
+    return invalid("courses, topics, questions, notes, and oldExams must be arrays.");
   }
   if (!Array.isArray(value.attempts)) return invalid("attempts must be an array.");
 
@@ -133,9 +140,10 @@ export function validateAppState(value: unknown): AppState {
     catalog.courses.length !== candidate.courses.length ||
     catalog.topics.length !== candidate.topics.length ||
     catalog.questions.length !== candidate.questions.length ||
-    catalog.notes.length !== candidate.notes.length
+    catalog.notes.length !== candidate.notes.length ||
+    catalog.oldExams.length !== candidate.oldExams.length
   ) {
-    return invalid("every topic, question, and note must belong to a saved course.");
+    return invalid("every topic, question, note, and old exam must belong to a saved course.");
   }
 
   const attempts = parseProgress(serializeProgress(candidate.attempts));

@@ -1,14 +1,15 @@
-import { MAX_ANSWER_CHOICES } from "./types";
-import type { Course, Question, StudyNote, Topic } from "./types";
+import { MAX_ANSWER_CHOICES, MAX_EXAM_DOCUMENT_BYTES } from "./types";
+import type { Course, OldExam, Question, StudyNote, Topic } from "./types";
 
 export const MANIFEST_SCHEMA_VERSION = 1 as const;
-export const COURSE_SCHEMA_VERSION = 2 as const;
+export const COURSE_SCHEMA_VERSION = 3 as const;
 
 export interface Catalog {
   courses: Course[];
   topics: Topic[];
   questions: Question[];
   notes: StudyNote[];
+  oldExams: OldExam[];
 }
 
 export interface CourseFileEntry {
@@ -27,9 +28,16 @@ interface CourseFile {
   topics: Omit<Topic, "courseId">[];
   questions: Omit<Question, "courseId">[];
   notes: Omit<StudyNote, "courseId">[];
+  oldExams: Omit<OldExam, "courseId">[];
 }
 
-export const EMPTY_CATALOG: Catalog = { courses: [], topics: [], questions: [], notes: [] };
+export const EMPTY_CATALOG: Catalog = {
+  courses: [],
+  topics: [],
+  questions: [],
+  notes: [],
+  oldExams: [],
+};
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -145,6 +153,43 @@ function parseNote(value: unknown, courseId: string, file: string): StudyNote {
   };
 }
 
+function parseOldExam(value: unknown, courseId: string, file: string): OldExam {
+  if (!isRecord(value)) fail(`${file}: every old exam must be an object.`);
+  if (!isRecord(value.document)) fail(`${file}: oldExam.document must be an object.`);
+  const year = value.year;
+  if (
+    year !== undefined &&
+    (!Number.isInteger(year) || (year as number) < 1900 || (year as number) > 2200)
+  ) {
+    fail(`${file}: oldExam.year must be between 1900 and 2200.`);
+  }
+  const storageName = stringValue(value.document.storageName, `${file}: document.storageName`);
+  if (!/^[a-f0-9-]+\.pdf$/.test(storageName)) {
+    fail(`${file}: document.storageName is not safe.`);
+  }
+  const mimeType = value.document.mimeType;
+  if (mimeType !== "application/pdf") fail(`${file}: old exam documents must be PDFs.`);
+  const size = numberValue(value.document.size, `${file}: document.size`);
+  if (!Number.isInteger(size) || size <= 0 || size > MAX_EXAM_DOCUMENT_BYTES) {
+    fail(`${file}: document.size is invalid.`);
+  }
+  return {
+    id: stringValue(value.id, `${file}: oldExam.id`),
+    courseId,
+    title: stringValue(value.title, `${file}: oldExam.title`),
+    year: year as number | undefined,
+    description: optionalString(value.description, `${file}: oldExam.description`),
+    document: {
+      storageName,
+      fileName: stringValue(value.document.fileName, `${file}: document.fileName`),
+      mimeType,
+      size,
+    },
+    createdAt: numberValue(value.createdAt, `${file}: oldExam.createdAt`),
+    updatedAt: numberValue(value.updatedAt, `${file}: oldExam.updatedAt`),
+  };
+}
+
 export function parseManifest(raw: string): CatalogManifest {
   const value = parseJson(raw, "manifest.json");
   if (!isRecord(value) || value.schemaVersion !== MANIFEST_SCHEMA_VERSION) {
@@ -178,7 +223,9 @@ export function parseCourseFile(raw: string, entry: CourseFileEntry): Catalog {
   const value = parseJson(raw, entry.file);
   if (
     !isRecord(value) ||
-    (value.schemaVersion !== 1 && value.schemaVersion !== COURSE_SCHEMA_VERSION)
+    (value.schemaVersion !== 1 &&
+      value.schemaVersion !== 2 &&
+      value.schemaVersion !== COURSE_SCHEMA_VERSION)
   ) {
     fail(`${entry.file} must use a supported schemaVersion.`);
   }
@@ -186,8 +233,11 @@ export function parseCourseFile(raw: string, entry: CourseFileEntry): Catalog {
   if (course.id !== entry.id) fail(`${entry.file}: course.id does not match manifest.json.`);
   if (!Array.isArray(value.topics)) fail(`${entry.file}: topics must be an array.`);
   if (!Array.isArray(value.questions)) fail(`${entry.file}: questions must be an array.`);
-  if (value.schemaVersion === COURSE_SCHEMA_VERSION && !Array.isArray(value.notes)) {
+  if (value.schemaVersion >= 2 && !Array.isArray(value.notes)) {
     fail(`${entry.file}: notes must be an array.`);
+  }
+  if (value.schemaVersion === COURSE_SCHEMA_VERSION && !Array.isArray(value.oldExams)) {
+    fail(`${entry.file}: oldExams must be an array.`);
   }
 
   const topics = value.topics.map((topic) => parseTopic(topic, course.id, entry.file));
@@ -204,7 +254,12 @@ export function parseCourseFile(raw: string, entry: CourseFileEntry): Catalog {
   if (new Set(notes.map((note) => note.id)).size !== notes.length) {
     fail(`${entry.file}: note IDs must be unique.`);
   }
-  return { courses: [course], topics, questions, notes };
+  const oldExamValues: unknown[] = Array.isArray(value.oldExams) ? value.oldExams : [];
+  const oldExams = oldExamValues.map((exam) => parseOldExam(exam, course.id, entry.file));
+  if (new Set(oldExams.map((exam) => exam.id)).size !== oldExams.length) {
+    fail(`${entry.file}: old exam IDs must be unique.`);
+  }
+  return { courses: [course], topics, questions, notes, oldExams };
 }
 
 export function serializeCourseFile(catalog: Catalog, courseId: string): string {
@@ -221,12 +276,16 @@ export function serializeCourseFile(catalog: Catalog, courseId: string): string 
   const notes = catalog.notes
     .filter((note) => note.courseId === courseId)
     .map(({ courseId: _courseId, ...note }) => note);
+  const oldExams = catalog.oldExams
+    .filter((exam) => exam.courseId === courseId)
+    .map(({ courseId: _courseId, ...exam }) => exam);
   const file: CourseFile = {
     schemaVersion: COURSE_SCHEMA_VERSION,
     course,
     topics,
     questions,
     notes,
+    oldExams,
   };
   return `${JSON.stringify(file, null, 2)}\n`;
 }
@@ -238,6 +297,7 @@ export function combineCatalogs(parts: Catalog[]): Catalog {
       topics: [...combined.topics, ...part.topics],
       questions: [...combined.questions, ...part.questions],
       notes: [...combined.notes, ...part.notes],
+      oldExams: [...combined.oldExams, ...part.oldExams],
     }),
     { ...EMPTY_CATALOG },
   );
@@ -252,6 +312,15 @@ export function combineCatalogs(parts: Catalog[]): Catalog {
   }
   if (new Set(catalog.notes.map((note) => note.id)).size !== catalog.notes.length) {
     fail("note IDs must be unique across all files.");
+  }
+  if (new Set(catalog.oldExams.map((exam) => exam.id)).size !== catalog.oldExams.length) {
+    fail("old exam IDs must be unique across all files.");
+  }
+  if (
+    new Set(catalog.oldExams.map((exam) => exam.document.storageName)).size !==
+    catalog.oldExams.length
+  ) {
+    fail("old exams must not share managed documents.");
   }
   return catalog;
 }

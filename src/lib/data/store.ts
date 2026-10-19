@@ -8,6 +8,13 @@ export { recordAttempt } from "./client/attempts";
 export { createCourse, deleteCourse, updateCourse } from "./client/courses";
 export { createNote, deleteNote, updateNote } from "./client/notes";
 export {
+  createOldExam,
+  deleteOldExam,
+  readOldExam,
+  updateOldExam,
+  type OldExamInput,
+} from "./client/old-exams";
+export {
   addQuestions,
   deleteQuestion,
   importQuestions,

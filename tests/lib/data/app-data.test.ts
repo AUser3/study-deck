@@ -69,6 +69,7 @@ describe("application-data repository", () => {
           updatedAt: 5,
         },
       ],
+      oldExams: [],
     };
 
     expect(await data.save(state)).toEqual(state);
@@ -91,6 +92,7 @@ describe("application-data repository", () => {
       questions: [],
       attempts: [],
       notes: [],
+      oldExams: [],
     };
     await data.save(empty);
     expect(await data.load()).toEqual(empty);
@@ -107,6 +109,7 @@ describe("application-data repository", () => {
         questions: [],
         attempts: [{ id: "a", questionId: "missing", correct: true, mode: "mc", at: 1 }],
         notes: [],
+        oldExams: [],
       }),
     ).rejects.toThrow(/existing question/);
   });
@@ -120,6 +123,7 @@ describe("application-data repository", () => {
       questions: [],
       attempts: [],
       notes: [],
+      oldExams: [],
     };
     await data.save(original);
     const backup = await data.createBackup();
@@ -130,9 +134,55 @@ describe("application-data repository", () => {
       questions: [],
       attempts: [],
       notes: [],
+      oldExams: [],
     });
 
     await expect(data.restoreBackup(backup)).resolves.toEqual(original);
     await expect(data.load()).resolves.toEqual(original);
+  });
+
+  it("backs up, removes, and restores managed old exam PDFs", async () => {
+    const data = await repository();
+    const pdf = Buffer.from("%PDF-1.4\n%%EOF");
+    const document = await data.saveDocument({
+      fileName: "exam.pdf",
+      mimeType: "application/pdf",
+      size: pdf.byteLength,
+      base64: pdf.toString("base64"),
+    });
+    const state: AppState = {
+      version: APP_STATE_VERSION,
+      courses: [{ id: "course-1", name: "Course", createdAt: 1 }],
+      topics: [],
+      questions: [],
+      attempts: [],
+      notes: [],
+      oldExams: [
+        {
+          id: "exam-1",
+          courseId: "course-1",
+          title: "Final exam",
+          document,
+          createdAt: 2,
+          updatedAt: 2,
+        },
+      ],
+    };
+    await data.save(state);
+    const backup = await data.createBackup();
+
+    await data.save({
+      version: APP_STATE_VERSION,
+      courses: [],
+      topics: [],
+      questions: [],
+      attempts: [],
+      notes: [],
+      oldExams: [],
+    });
+    await expect(data.readDocument(document)).rejects.toMatchObject({ code: "ENOENT" });
+
+    await data.restoreBackup(backup);
+    await expect(data.readDocument(document)).resolves.toBe(pdf.toString("base64"));
   });
 });

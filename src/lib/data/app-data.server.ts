@@ -6,6 +6,8 @@ import path from "node:path";
 
 import { resolveAppDataDirectory } from "./app-data-location.server";
 import { parseBackup, serializeBackup } from "./backup";
+import { ManagedDocumentStore } from "./managed-documents.server";
+import type { DocumentUpload } from "./managed-documents.server";
 import {
   EMPTY_PROGRESS,
   parseProgress,
@@ -23,7 +25,7 @@ import {
   type CourseFileEntry,
 } from "./catalog";
 import { APP_STATE_VERSION } from "./types";
-import type { AppState } from "./types";
+import type { AppState, ManagedDocument } from "./types";
 
 const MANIFEST_FILE = "manifest.json";
 const EMPTY_MANIFEST = serializeManifest([]);
@@ -58,8 +60,11 @@ function createEntry(catalog: Catalog, courseId: string, usedFiles: Set<string>)
 
 export class AppDataRepository {
   private queue: Promise<void> = Promise.resolve();
+  private readonly documents: ManagedDocumentStore;
 
-  constructor(readonly directory: string) {}
+  constructor(readonly directory: string) {
+    this.documents = new ManagedDocumentStore(directory);
+  }
 
   load(): Promise<AppState> {
     return this.exclusive(async () => {
@@ -81,7 +86,11 @@ export class AppDataRepository {
   createBackup(): Promise<string> {
     return this.exclusive(async () => {
       await this.ensureBaseFiles();
-      return serializeBackup(await this.readState());
+      const state = await this.readState();
+      const documents = await Promise.all(
+        state.oldExams.map((exam) => this.documents.export(exam.document)),
+      );
+      return serializeBackup(state, undefined, documents);
     });
   }
 
@@ -90,12 +99,29 @@ export class AppDataRepository {
     return this.exclusive(async () => {
       await this.ensureBaseFiles();
       const previous = await this.readState();
+      await Promise.all(backup.documents.map((document) => this.documents.restore(document)));
       await this.writeState(backup.state, previous);
       return backup.state;
     });
   }
 
+  saveDocument(upload: DocumentUpload): Promise<ManagedDocument> {
+    return this.exclusive(async () => {
+      await this.ensureBaseFiles();
+      return this.documents.save(upload);
+    });
+  }
+
+  readDocument(document: ManagedDocument): Promise<string> {
+    return this.exclusive(() => this.documents.read(document));
+  }
+
+  removeDocument(document: ManagedDocument): Promise<void> {
+    return this.exclusive(() => this.documents.remove(document));
+  }
+
   private async writeState(next: AppState, previous: AppState): Promise<void> {
+    await Promise.all(next.oldExams.map((exam) => this.documents.verify(exam.document)));
     const manifest = parseManifest(await this.read(MANIFEST_FILE));
     const oldEntries = manifest.courses;
     const oldById = new Map(oldEntries.map((entry) => [entry.id, entry]));
@@ -126,6 +152,11 @@ export class AppDataRepository {
         await rm(path.join(this.directory, entry.file), { force: true });
       }
     }
+    const retainedDocuments = new Set(next.oldExams.map((exam) => exam.document.storageName));
+    const removedDocuments = previous.oldExams.filter(
+      (exam) => !retainedDocuments.has(exam.document.storageName),
+    );
+    await Promise.all(removedDocuments.map((exam) => this.documents.remove(exam.document)));
   }
 
   private exclusive<T>(operation: () => Promise<T>): Promise<T> {
@@ -138,7 +169,10 @@ export class AppDataRepository {
   }
 
   private async ensureBaseFiles(): Promise<void> {
-    await mkdir(path.join(this.directory, "courses"), { recursive: true });
+    await Promise.all([
+      mkdir(path.join(this.directory, "courses"), { recursive: true }),
+      this.documents.ensure(),
+    ]);
     await Promise.all([
       this.writeIfMissing(MANIFEST_FILE, EMPTY_MANIFEST),
       this.writeIfMissing(PROGRESS_FILE, EMPTY_PROGRESS),
