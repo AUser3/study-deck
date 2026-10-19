@@ -14,7 +14,7 @@ export interface Crumb {
 export function AppShell({ crumbs = [], children }: { crumbs?: Crumb[]; children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-border bg-card/70 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-border bg-card/85 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
           <Link
             to="/"
@@ -51,7 +51,9 @@ export function AppShell({ crumbs = [], children }: { crumbs?: Crumb[]; children
           <DataActions />
         </div>
       </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <div className="page-enter">{children}</div>
+      </main>
       <SiteFooter />
     </div>
   );

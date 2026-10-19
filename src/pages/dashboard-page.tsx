@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { GridPattern } from "@/components/ui/grid-pattern";
+import { InteractiveHoverButton } from "@/components/ui/interactive-hover-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,15 +64,31 @@ export function DashboardPage() {
 
   return (
     <AppShell>
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-primary">Welcome back</p>
-          <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">Your courses</h1>
+      <section className="relative overflow-hidden rounded-2xl border bg-card px-6 py-7 shadow-card sm:px-8 sm:py-9">
+        <GridPattern
+          width={32}
+          height={32}
+          squares={[
+            [1, 1],
+            [4, 2],
+            [7, 1],
+            [9, 3],
+          ]}
+          className="[mask-image:linear-gradient(to_left,black,transparent_75%)]"
+        />
+        <div className="relative flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <p className="text-sm font-medium text-primary">Welcome back</p>
+            <h1 className="mt-1 text-3xl font-semibold sm:text-4xl">Your courses</h1>
+            <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+              Questions, notes, and past exams—organized around what you are learning.
+            </p>
+          </div>
+          <InteractiveHoverButton onClick={() => setCreating(true)}>
+            Create course
+          </InteractiveHoverButton>
         </div>
-        <Button size="lg" onClick={() => setCreating(true)}>
-          <Plus className="h-4 w-4" /> Create course
-        </Button>
-      </div>
+      </section>
 
       <section aria-label="Study overview" className="mt-8 grid gap-4 sm:grid-cols-3">
         <Stat
@@ -115,7 +133,7 @@ export function DashboardPage() {
               return (
                 <li
                   key={c.id}
-                  className="group relative flex flex-col rounded-xl border border-border bg-card p-5 shadow-card transition hover:border-primary/40"
+                  className="group relative flex flex-col rounded-xl border border-border bg-card p-5 shadow-card transition duration-200 hover:border-primary/40 hover:shadow-lg motion-safe:hover:-translate-y-1"
                 >
                   <div className="flex items-start justify-between gap-2">
                     <Link
@@ -220,7 +238,7 @@ function Stat({
   hint: string;
 }) {
   return (
-    <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-card">
+    <div className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 shadow-card transition duration-200 hover:border-primary/30 hover:shadow-md motion-safe:hover:-translate-y-0.5">
       <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary text-primary">
         {icon}
       </div>
