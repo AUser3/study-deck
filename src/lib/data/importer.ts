@@ -35,18 +35,18 @@ Explanation: DNS resolves domain names to records such as IP addresses.`;
 
 export const EXAMPLE_JSON = [
   {
-    topic: "Routing",
-    question: "Which protocols use a link-state algorithm?",
-    options: ["BGP", "OSPF", "RIP", "IS-IS"],
-    answer: ["OSPF", "IS-IS"],
-    explanation: "OSPF and IS-IS are link-state routing protocols.",
+    topic: "Numbers",
+    question: "Which numbers are even?",
+    options: ["1", "2", "3", "4"],
+    answer: ["2", "4"],
+    explanation: "Even numbers are divisible by 2.",
   },
   {
-    topic: "DNS",
-    question: "What does DNS stand for?",
+    topic: "Vocabulary",
+    question: "What is the opposite of hot?",
     options: [],
-    answer: "Domain Name System",
-    explanation: "",
+    answer: "Cold",
+    explanation: "This example demonstrates a typed-answer question.",
   },
 ];
 

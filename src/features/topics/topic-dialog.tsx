@@ -16,23 +16,37 @@ interface TopicDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial?: Topic;
-  onSubmit: (name: string) => void;
+  onSubmit: (name: string) => void | Promise<void>;
 }
 
 export function TopicDialog({ open, onOpenChange, initial, onSubmit }: TopicDialogProps) {
   const [name, setName] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (open) setName(initial?.name ?? "");
+    if (open) {
+      setName(initial?.name ?? "");
+      setError("");
+    }
   }, [open, initial]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <form
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            if (name.trim()) onSubmit(name);
+            if (!name.trim()) return;
+            setSaving(true);
+            setError("");
+            try {
+              await onSubmit(name);
+            } catch (cause) {
+              setError(cause instanceof Error ? cause.message : "The topic could not be saved.");
+            } finally {
+              setSaving(false);
+            }
           }}
         >
           <DialogHeader>
@@ -47,12 +61,22 @@ export function TopicDialog({ open, onOpenChange, initial, onSubmit }: TopicDial
               onChange={(event) => setName(event.target.value)}
             />
           </div>
+          {error && (
+            <p role="alert" className="mb-4 text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={saving}
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={!name.trim()}>
-              {initial ? "Save" : "Create topic"}
+            <Button type="submit" disabled={!name.trim() || saving}>
+              {saving ? "Saving…" : initial ? "Save" : "Create topic"}
             </Button>
           </DialogFooter>
         </form>

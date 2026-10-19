@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { QuestionImportPage } from "@/features/questions/question-import-page";
+import { QuestionImportPage } from "@/pages/question-import-page";
 
-export const Route = createFileRoute("/courses/$courseId_/import")({
+export const Route = createFileRoute("/courses/$courseId/import")({
   validateSearch: (search: Record<string, unknown>): { topic?: string } => ({
     topic: typeof search.topic === "string" ? search.topic : undefined,
   }),

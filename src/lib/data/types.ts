@@ -5,7 +5,6 @@ export interface Course {
   id: ID;
   name: string;
   description?: string;
-  demo?: boolean;
   createdAt: number;
 }
 
@@ -13,7 +12,6 @@ export interface Topic {
   id: ID;
   courseId: ID;
   name: string;
-  demo?: boolean;
   createdAt: number;
 }
 
@@ -29,7 +27,6 @@ export interface Question {
   /** Expected answer. For choice questions this lists all correct choices. */
   answer: string;
   explanation?: string;
-  demo?: boolean;
   createdAt: number;
 }
 

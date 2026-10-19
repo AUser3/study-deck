@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AlertCircle, FileUp, FolderPlus, Layers, Pencil, Play, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AppShell } from "@/components/app-shell";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { DemoBadge } from "@/components/demo-badge";
 import { EmptyState } from "@/components/empty-state";
 import { Loading } from "@/components/loading";
 import { ProgressBar } from "@/components/progress-bar";
@@ -26,27 +25,8 @@ import {
 import { attemptsByQuestion, computeProgress, pct } from "@/lib/data/progress";
 import type { StudyMode, Topic } from "@/lib/data/types";
 
-export const Route = createFileRoute("/courses/$courseId")({
-  head: () => ({
-    meta: [
-      { title: "Course — Studydeck" },
-      {
-        name: "description",
-        content:
-          "Topics, question counts and progress for this course. Pick topics and start studying.",
-      },
-      { property: "og:title", content: "Course — Studydeck" },
-      {
-        property: "og:description",
-        content: "Topics, question counts and progress for this course.",
-      },
-    ],
-  }),
-  component: CoursePage,
-});
-
-function CoursePage() {
-  const { courseId } = Route.useParams();
+/** Topics, progress, and course actions for one course. */
+export function CoursePage({ courseId }: { courseId: string }) {
   const s = useAppState();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -113,7 +93,6 @@ function CoursePage() {
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h1 className="text-3xl font-semibold sm:text-4xl">{course.name}</h1>
-            {course.demo && <DemoBadge />}
             <Button
               variant="ghost"
               size="icon"
@@ -276,8 +255,8 @@ function CoursePage() {
       <TopicDialog
         open={newTopic}
         onOpenChange={setNewTopic}
-        onSubmit={(n) => {
-          createTopic(courseId, n);
+        onSubmit={async (n) => {
+          await createTopic(courseId, n);
           setNewTopic(false);
           toast("Topic created");
         }}
@@ -286,8 +265,8 @@ function CoursePage() {
         open={!!renaming}
         onOpenChange={(o) => !o && setRenaming(null)}
         initial={renaming ?? undefined}
-        onSubmit={(n) => {
-          renameTopic(renaming!.id, n);
+        onSubmit={async (n) => {
+          await renameTopic(renaming!.id, n);
           setRenaming(null);
         }}
       />
@@ -296,8 +275,8 @@ function CoursePage() {
         onOpenChange={(o) => !o && setDeleting(null)}
         title={`Delete “${deleting?.name}”?`}
         description="All questions and progress in this topic will be removed."
-        onConfirm={() => {
-          deleteTopic(deleting!.id);
+        onConfirm={async () => {
+          await deleteTopic(deleting!.id);
           setSelected((c) => {
             const n = new Set(c);
             n.delete(deleting!.id);
@@ -310,8 +289,8 @@ function CoursePage() {
         open={editCourse}
         onOpenChange={setEditCourse}
         initial={course}
-        onSubmit={(n, d) => {
-          updateCourse(courseId, { name: n.trim(), description: d.trim() || undefined });
+        onSubmit={async (n, d) => {
+          await updateCourse(courseId, { name: n.trim(), description: d.trim() || undefined });
           setEditCourse(false);
         }}
       />
@@ -322,8 +301,8 @@ function CoursePage() {
         topics={s.topics}
         defaultCourseId={courseId}
         defaultTopicId={topics[0]?.id ?? ""}
-        onSubmit={(q) => {
-          addQuestions([q]);
+        onSubmit={async (q) => {
+          await addQuestions([q]);
           setAddingQ(false);
           toast("Question added");
         }}

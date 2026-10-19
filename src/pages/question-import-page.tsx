@@ -7,17 +7,17 @@ import { AppShell } from "@/components/app-shell";
 import { EmptyState } from "@/components/empty-state";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
+import { createImportDraft, parseImportDraft } from "@/features/questions/import-model";
+import { ImportPreview } from "@/features/questions/import-preview";
+import { ImportSource } from "@/features/questions/import-source";
 import { importQuestions, useAppState } from "@/lib/data/store";
-
-import { createImportDraft, parseImportDraft } from "./import-model";
-import { ImportPreview } from "./import-preview";
-import { ImportSource } from "./import-source";
 
 interface QuestionImportPageProps {
   courseId: string;
   initialTopicId?: string;
 }
 
+/** Text and JSON question-import workflow. */
 export function QuestionImportPage({ courseId, initialTopicId }: QuestionImportPageProps) {
   const state = useAppState();
   const navigate = useNavigate();
@@ -53,8 +53,8 @@ export function QuestionImportPage({ courseId, initialTopicId }: QuestionImportP
     );
   }
 
-  const doImport = () => {
-    const { questions, created } = importQuestions(
+  const doImport = async () => {
+    const { questions, created } = await importQuestions(
       courseId,
       result.items.map((item) => ({
         topicName: item.topicName,

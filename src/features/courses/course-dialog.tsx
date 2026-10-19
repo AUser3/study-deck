@@ -18,26 +18,38 @@ interface CourseDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initial?: Course;
-  onSubmit: (name: string, description: string) => void;
+  onSubmit: (name: string, description: string) => void | Promise<void>;
 }
 
 export function CourseDialog({ open, onOpenChange, initial, onSubmit }: CourseDialogProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setName(initial?.name ?? "");
     setDescription(initial?.description ?? "");
+    setError("");
   }, [open, initial]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <form
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
-            if (name.trim()) onSubmit(name, description);
+            if (!name.trim()) return;
+            setSaving(true);
+            setError("");
+            try {
+              await onSubmit(name, description);
+            } catch (cause) {
+              setError(cause instanceof Error ? cause.message : "The course could not be saved.");
+            } finally {
+              setSaving(false);
+            }
           }}
         >
           <DialogHeader>
@@ -67,12 +79,22 @@ export function CourseDialog({ open, onOpenChange, initial, onSubmit }: CourseDi
               />
             </div>
           </div>
+          {error && (
+            <p role="alert" className="mb-4 text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={saving}
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={!name.trim()}>
-              {initial ? "Save" : "Create course"}
+            <Button type="submit" disabled={!name.trim() || saving}>
+              {saving ? "Saving…" : initial ? "Save" : "Create course"}
             </Button>
           </DialogFooter>
         </form>

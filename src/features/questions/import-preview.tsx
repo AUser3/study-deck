@@ -13,7 +13,7 @@ interface ImportPreviewProps {
   items: ParsedQuestion[];
   error?: string;
   existingTopics: Topic[];
-  onImport: () => void;
+  onImport: () => void | Promise<void>;
 }
 
 export function ImportPreview({
@@ -25,6 +25,8 @@ export function ImportPreview({
 }: ImportPreviewProps) {
   const [limit, setLimit] = useState(PREVIEW_PAGE_SIZE);
   const [onlyErrors, setOnlyErrors] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importError, setImportError] = useState("");
 
   useEffect(() => setLimit(PREVIEW_PAGE_SIZE), [items]);
 
@@ -116,8 +118,34 @@ export function ImportPreview({
             </button>
           </div>
         )}
-        <Button className="mt-4 w-full" size="lg" disabled={!canImport} onClick={onImport}>
-          {canImport ? `Import ${items.length} questions` : "Fix errors to import"}
+        {importError && (
+          <p role="alert" className="mt-3 rounded-md bg-danger-soft p-2.5 text-sm text-destructive">
+            {importError}
+          </p>
+        )}
+        <Button
+          className="mt-4 w-full"
+          size="lg"
+          disabled={!canImport || importing}
+          onClick={async () => {
+            setImporting(true);
+            setImportError("");
+            try {
+              await onImport();
+            } catch (cause) {
+              setImportError(
+                cause instanceof Error ? cause.message : "The questions could not be imported.",
+              );
+            } finally {
+              setImporting(false);
+            }
+          }}
+        >
+          {importing
+            ? "Saving…"
+            : canImport
+              ? `Import ${items.length} questions`
+              : "Fix errors to import"}
         </Button>
       </div>
 

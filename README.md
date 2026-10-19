@@ -2,6 +2,9 @@
 
 A local-first flashcard app for organizing courses and topics, importing question banks, and studying with several practice modes.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture boundaries, development conventions, and the
+pull-request checklist.
+
 ## Development
 
 You need Node.js 22.12 or newer and npm.
@@ -13,7 +16,10 @@ npm install
 npm run dev
 ```
 
-The development server is available at `http://localhost:8080` by default.
+After `npm run dev` starts, open the URL printed by Vite. The configured port is `5173`; native
+development normally uses `http://localhost:5173`. When Vite runs inside WSL, the Windows browser
+may use that localhost URL when WSL forwarding is available, otherwise use one of Vite's printed
+network URLs.
 
 To create and preview a production build:
 
@@ -29,15 +35,60 @@ npm run preview
 - React
 - Tailwind CSS
 
-App data is stored in the browser's local storage.
+Studydeck stores courses, topics, questions, and progress as private JSON outside the repository.
+The local application server creates the directory and base files automatically on first use, and
+the browser UI reads and writes them through same-origin server functions. There is no database,
+folder picker, or browser permission popup.
+
+The default data directory depends on the operating system running `npm run dev`:
+
+- Linux and WSL: `~/.local/share/studydeck`
+- Windows: `%LOCALAPPDATA%\Studydeck`
+- macOS: `~/Library/Application Support/Studydeck`
+
+Set `STUDYDECK_DATA_DIR` before starting the app to use a different absolute directory. Existing
+files are read and validated at startup but are not rewritten until an action in the app changes
+their data. Writes use a temporary file and rename so an interrupted write is less likely to damage
+the saved JSON.
 
 ## Source structure
 
-- `src/routes` contains route definitions and page-level composition.
-- `src/features` owns feature-specific UI and rules for courses, topics, questions, and study sessions.
+- `src/routes` contains small file-based route adapters; nested course routes use directories that
+  mirror their URLs.
+- `src/pages` contains complete screens composed by the route adapters.
+- `src/features` owns reusable feature UI and rules for courses, topics, questions, and study
+  sessions.
 - `src/components` contains reusable app components; `components/ui` contains only primitives the app uses.
-- `src/lib/data/store.ts` is the single data gateway. UI code must not read or write local storage directly.
+- `src/lib/data/store.ts` is the single data gateway used by UI code; its focused client modules own
+  course, topic, question, attempt, and state operations.
+- `src/lib/data/app-data.functions.ts` is the browser-to-local-server boundary.
+- `src/lib/data/app-data.server.ts` owns private application-data filesystem access, while location
+  resolution and state validation live in focused sibling modules.
+- `src/lib/data/catalog.ts` validates and serializes repository JSON.
 - `src/lib/data/progress.ts` owns all progress calculations.
-- `src/lib/data/demo.ts` is the only place that creates removable demo content.
+- `tests` contains the test suite and its shared browser setup.
 
-Dependencies flow from routes to features/components and then to `lib`; the data layer never imports UI. Add abstractions or UI primitives only when an existing use case needs them.
+Dependencies flow from routes to pages, then to features/components, and finally to `lib`; the data
+layer never imports UI. Add abstractions or UI primitives only when an existing use case needs them.
+
+## Data layout
+
+The application-data directory contains:
+
+```text
+manifest.json
+progress.json
+courses/
+  <course-name-and-id>.json
+```
+
+`manifest.json` indexes course files, each course file contains that course's topics and questions,
+and `progress.json` contains study attempts. Use **Open data folder** in the app header to reveal the
+directory in your operating system's file manager. Back up this directory to preserve your data.
+
+## Generated build output
+
+Running `npm run build` creates `.output/`, including the browser assets under `public/`, the local
+Node server bundle under `server/`, and Nitro's build metadata. It is required only to run that
+particular production build. The directory is ignored by Git and can be deleted at any time;
+`npm run build` recreates it.

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { getState, recordAttempt, useAppState } from "@/lib/data/store";
 import { shuffle } from "@/lib/data/matching";
 import type { Question, StudyMode } from "@/lib/data/types";
+import { toast } from "sonner";
 
 import { MultipleChoiceCard } from "./multiple-choice-card";
 import { SessionSummary, type StudyResult } from "./session-summary";
@@ -110,7 +111,9 @@ export function StudySession({ courseId, topicIds, mode }: StudySessionProps) {
 
   const question = queue[currentIndex];
   const onResult = (correct: boolean) => {
-    recordAttempt(question.id, correct, mode);
+    void recordAttempt(question.id, correct, mode).catch((error: unknown) => {
+      toast.error(error instanceof Error ? error.message : "Could not save study progress.");
+    });
     setResults((current) => [...current, { id: question.id, correct }]);
   };
   const next = () => {

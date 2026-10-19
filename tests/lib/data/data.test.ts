@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { parseJson, parseText } from "./importer";
-import { answersMatch, selectionsMatch } from "./matching";
-import { computeProgress, isMastered } from "./progress";
-import { normalizeQuestion } from "./store";
-import type { Attempt, Question } from "./types";
+import { EXAMPLE_JSON, parseJson, parseText } from "@/lib/data/importer";
+import { answersMatch, selectionsMatch } from "@/lib/data/matching";
+import { computeProgress, isMastered } from "@/lib/data/progress";
+import { normalizeQuestion } from "@/lib/data/store";
+import type { Attempt, Question } from "@/lib/data/types";
 
 describe("text importer", () => {
   it("applies Topic and maps multiple correct choices", () => {
@@ -34,6 +34,14 @@ describe("text importer", () => {
 });
 
 describe("json importer", () => {
+  it("keeps the downloadable general sample valid", () => {
+    const { items, error } = parseJson(JSON.stringify(EXAMPLE_JSON), "");
+    expect(error).toBeUndefined();
+    expect(items).toHaveLength(2);
+    expect(items.every((item) => item.errors.length === 0)).toBe(true);
+    expect(items[0].correctIndices).toEqual([1, 3]);
+  });
+
   it("requires answer to match an option", () => {
     const { items } = parseJson(
       JSON.stringify([{ topic: "T", question: "q", options: ["a", "b"], answer: "c" }]),

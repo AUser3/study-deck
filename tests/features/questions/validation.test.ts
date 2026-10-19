@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { QuestionInput } from "@/lib/data/types";
 
-import { validateQuestion } from "./validation";
+import { validateQuestion } from "@/features/questions/validation";
 
 const baseQuestion: QuestionInput = {
   courseId: "course-1",

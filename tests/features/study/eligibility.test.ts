@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { getStudyEligibility } from "./eligibility";
+import { getStudyEligibility } from "@/features/study/eligibility";
 
 const questions = [{ choices: ["A", "B"] }, { choices: [] }];
 

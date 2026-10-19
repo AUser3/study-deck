@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   AlertCircle,
@@ -26,25 +26,10 @@ import { addQuestions, deleteQuestion, updateQuestion, useAppState } from "@/lib
 import { attemptsByQuestion, computeProgress, isMastered, pct } from "@/lib/data/progress";
 import type { Question, StudyMode } from "@/lib/data/types";
 
-export const Route = createFileRoute("/courses/$courseId_/topics/$topicId")({
-  head: () => ({
-    meta: [
-      { title: "Question bank — Studydeck" },
-      { name: "description", content: "Browse, search, add and edit the questions in this topic." },
-      { property: "og:title", content: "Question bank — Studydeck" },
-      {
-        property: "og:description",
-        content: "Browse, search, add and edit the questions in this topic.",
-      },
-    ],
-  }),
-  component: TopicPage,
-});
-
 const PAGE = 50;
 
-function TopicPage() {
-  const { courseId, topicId } = Route.useParams();
+/** Question bank and study actions for one topic. */
+export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; topicId: string }) {
   const s = useAppState();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
@@ -264,8 +249,8 @@ function TopicPage() {
         topics={s.topics}
         defaultCourseId={courseId}
         defaultTopicId={topicId}
-        onSubmit={(q) => {
-          addQuestions([q]);
+        onSubmit={async (q) => {
+          await addQuestions([q]);
           setAdding(false);
           toast("Question added");
         }}
@@ -278,8 +263,8 @@ function TopicPage() {
         initial={editing ?? undefined}
         defaultCourseId={courseId}
         defaultTopicId={topicId}
-        onSubmit={(q) => {
-          updateQuestion(editing!.id, q);
+        onSubmit={async (q) => {
+          await updateQuestion(editing!.id, q);
           setEditing(null);
           toast("Question saved");
         }}
@@ -289,8 +274,8 @@ function TopicPage() {
         onOpenChange={(o) => !o && setDeleting(null)}
         title="Delete this question?"
         description={deleting?.text}
-        onConfirm={() => {
-          deleteQuestion(deleting!.id);
+        onConfirm={async () => {
+          await deleteQuestion(deleting!.id);
           setDeleting(null);
         }}
       />

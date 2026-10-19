@@ -31,7 +31,7 @@ interface QuestionDialogProps {
   initial?: Question;
   defaultCourseId: string;
   defaultTopicId: string;
-  onSubmit: (question: QuestionInput) => void;
+  onSubmit: (question: QuestionInput) => void | Promise<void>;
 }
 
 function createBlankQuestion(courseId: string, topicId: string): QuestionInput {
@@ -60,11 +60,14 @@ export function QuestionDialog({
     createBlankQuestion(defaultCourseId, defaultTopicId),
   );
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   useEffect(() => {
     if (!open) return;
     setQuestion(initial ? { ...initial } : createBlankQuestion(defaultCourseId, defaultTopicId));
     setSubmitted(false);
+    setSaveError("");
   }, [open, initial, defaultCourseId, defaultTopicId]);
 
   const errors = validateQuestion(question);
@@ -78,10 +81,21 @@ export function QuestionDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl">
         <form
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
             setSubmitted(true);
-            if (!errors.length) onSubmit(question);
+            if (errors.length) return;
+            setSaving(true);
+            setSaveError("");
+            try {
+              await onSubmit(question);
+            } catch (cause) {
+              setSaveError(
+                cause instanceof Error ? cause.message : "The question could not be saved.",
+              );
+            } finally {
+              setSaving(false);
+            }
           }}
         >
           <DialogHeader>
@@ -174,12 +188,24 @@ export function QuestionDialog({
                 ))}
               </ul>
             )}
+            {saveError && (
+              <p role="alert" className="text-sm text-destructive">
+                {saveError}
+              </p>
+            )}
           </div>
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={saving}
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit">{initial ? "Save question" : "Add question"}</Button>
+            <Button type="submit" disabled={saving}>
+              {saving ? "Saving…" : initial ? "Save question" : "Add question"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
