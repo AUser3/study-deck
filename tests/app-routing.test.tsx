@@ -30,4 +30,10 @@ describe("App routing", () => {
       "/courses/$courseId/old-exams",
     );
   });
+
+  it.each(["/about", "/faq", "/contributing"])("matches the public page at %s", (path) => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    expect(router.matchRoutes(path).at(-1)?.routeId).toBe(path);
+  });
 });

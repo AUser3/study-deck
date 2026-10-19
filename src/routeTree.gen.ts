@@ -10,6 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as ContributingRouteImport } from './routes/contributing'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as StudyRouteImport } from './routes/study'
 import { Route as CoursesCourseIdRouteRouteImport } from './routes/courses/$courseId/route'
 import { Route as CoursesCourseIdIndexRouteImport } from './routes/courses/$courseId/index'
@@ -21,6 +24,21 @@ import { Route as CoursesCourseIdTopicsTopicIdRouteImport } from './routes/cours
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContributingRoute = ContributingRouteImport.update({
+  id: '/contributing',
+  path: '/contributing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudyRoute = StudyRouteImport.update({
@@ -62,6 +80,9 @@ const CoursesCourseIdTopicsTopicIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/contributing': typeof ContributingRoute
+  '/faq': typeof FaqRoute
   '/study': typeof StudyRoute
   '/courses/$courseId': typeof CoursesCourseIdRouteRouteWithChildren
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
@@ -72,6 +93,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/contributing': typeof ContributingRoute
+  '/faq': typeof FaqRoute
   '/study': typeof StudyRoute
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
   '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
@@ -82,6 +106,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
+  '/contributing': typeof ContributingRoute
+  '/faq': typeof FaqRoute
   '/study': typeof StudyRoute
   '/courses/$courseId': typeof CoursesCourseIdRouteRouteWithChildren
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
@@ -94,6 +121,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/about'
+    | '/contributing'
+    | '/faq'
     | '/study'
     | '/courses/$courseId'
     | '/courses/$courseId/import'
@@ -104,6 +134,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/about'
+    | '/contributing'
+    | '/faq'
     | '/study'
     | '/courses/$courseId/import'
     | '/courses/$courseId/notes'
@@ -113,6 +146,9 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/about'
+    | '/contributing'
+    | '/faq'
     | '/study'
     | '/courses/$courseId'
     | '/courses/$courseId/import'
@@ -124,6 +160,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
+  ContributingRoute: typeof ContributingRoute
+  FaqRoute: typeof FaqRoute
   StudyRoute: typeof StudyRoute
   CoursesCourseIdRouteRoute: typeof CoursesCourseIdRouteRouteWithChildren
 }
@@ -135,6 +174,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contributing': {
+      id: '/contributing'
+      path: '/contributing'
+      fullPath: '/contributing'
+      preLoaderRoute: typeof ContributingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/study': {
@@ -210,6 +270,9 @@ const CoursesCourseIdRouteRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
+  ContributingRoute: ContributingRoute,
+  FaqRoute: FaqRoute,
   StudyRoute: StudyRoute,
   CoursesCourseIdRouteRoute: CoursesCourseIdRouteRouteWithChildren,
 }
