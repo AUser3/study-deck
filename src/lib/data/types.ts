@@ -1,6 +1,6 @@
 export type ID = string;
 export const MAX_ANSWER_CHOICES = 16;
-export const APP_STATE_VERSION = 2 as const;
+export const APP_STATE_VERSION = 3 as const;
 
 export interface Course {
   id: ID;
@@ -41,12 +41,22 @@ export interface Attempt {
   at: number;
 }
 
+export interface StudyNote {
+  id: ID;
+  courseId: ID;
+  title: string;
+  content: string;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface AppState {
   version: typeof APP_STATE_VERSION;
   courses: Course[];
   topics: Topic[];
   questions: Question[];
   attempts: Attempt[];
+  notes: StudyNote[];
 }
 
 export type QuestionInput = Omit<Question, "id" | "createdAt" | "answer"> & { answer?: string };

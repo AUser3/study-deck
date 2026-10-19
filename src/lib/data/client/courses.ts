@@ -41,6 +41,7 @@ export function deleteCourse(id: ID): Promise<void> {
         courses: current.courses.filter((course) => course.id !== id),
         topics: current.topics.filter((topic) => topic.courseId !== id),
         questions: current.questions.filter((question) => question.courseId !== id),
+        notes: current.notes.filter((note) => note.courseId !== id),
         attempts: current.attempts.filter((attempt) => !questionIds.has(attempt.questionId)),
       },
       result: undefined,

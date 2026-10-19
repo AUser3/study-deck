@@ -24,6 +24,16 @@ const catalog: Catalog = {
       createdAt: 3,
     },
   ],
+  notes: [
+    {
+      id: "note-1",
+      courseId: "course-1",
+      title: "Routing summary",
+      content: "# Link state",
+      createdAt: 4,
+      updatedAt: 4,
+    },
+  ],
 };
 
 describe("catalog files", () => {
@@ -36,6 +46,19 @@ describe("catalog files", () => {
   it("round-trips the manifest", () => {
     const entries = [{ id: "course-1", file: "courses/networks-course1.json" }];
     expect(parseManifest(serializeManifest(entries)).courses).toEqual(entries);
+  });
+
+  it("migrates schema version 1 course files with an empty notes list", () => {
+    const current = JSON.parse(serializeCourseFile(catalog, "course-1"));
+    const { notes: _notes, ...legacy } = current;
+    legacy.schemaVersion = 1;
+
+    expect(
+      parseCourseFile(JSON.stringify(legacy), {
+        id: "course-1",
+        file: "courses/networks-course1.json",
+      }).notes,
+    ).toEqual([]);
   });
 
   it("rejects paths that can escape the data directory", () => {

@@ -6,6 +6,7 @@
  */
 export { recordAttempt } from "./client/attempts";
 export { createCourse, deleteCourse, updateCourse } from "./client/courses";
+export { createNote, deleteNote, updateNote } from "./client/notes";
 export {
   addQuestions,
   deleteQuestion,

@@ -1,12 +1,14 @@
 import { MAX_ANSWER_CHOICES } from "./types";
-import type { Course, Question, Topic } from "./types";
+import type { Course, Question, StudyNote, Topic } from "./types";
 
-export const CATALOG_SCHEMA_VERSION = 1 as const;
+export const MANIFEST_SCHEMA_VERSION = 1 as const;
+export const COURSE_SCHEMA_VERSION = 2 as const;
 
 export interface Catalog {
   courses: Course[];
   topics: Topic[];
   questions: Question[];
+  notes: StudyNote[];
 }
 
 export interface CourseFileEntry {
@@ -15,18 +17,19 @@ export interface CourseFileEntry {
 }
 
 export interface CatalogManifest {
-  schemaVersion: typeof CATALOG_SCHEMA_VERSION;
+  schemaVersion: typeof MANIFEST_SCHEMA_VERSION;
   courses: CourseFileEntry[];
 }
 
 interface CourseFile {
-  schemaVersion: typeof CATALOG_SCHEMA_VERSION;
+  schemaVersion: typeof COURSE_SCHEMA_VERSION;
   course: Course;
   topics: Omit<Topic, "courseId">[];
   questions: Omit<Question, "courseId">[];
+  notes: Omit<StudyNote, "courseId">[];
 }
 
-export const EMPTY_CATALOG: Catalog = { courses: [], topics: [], questions: [] };
+export const EMPTY_CATALOG: Catalog = { courses: [], topics: [], questions: [], notes: [] };
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -127,10 +130,25 @@ function parseQuestion(
   };
 }
 
+function parseNote(value: unknown, courseId: string, file: string): StudyNote {
+  if (!isRecord(value)) fail(`${file}: every note must be an object.`);
+  return {
+    id: stringValue(value.id, `${file}: note.id`),
+    courseId,
+    title: stringValue(value.title, `${file}: note.title`),
+    content:
+      typeof value.content === "string"
+        ? value.content
+        : fail(`${file}: note.content must be a string.`),
+    createdAt: numberValue(value.createdAt, `${file}: note.createdAt`),
+    updatedAt: numberValue(value.updatedAt, `${file}: note.updatedAt`),
+  };
+}
+
 export function parseManifest(raw: string): CatalogManifest {
   const value = parseJson(raw, "manifest.json");
-  if (!isRecord(value) || value.schemaVersion !== CATALOG_SCHEMA_VERSION) {
-    fail(`manifest.json must use schemaVersion ${CATALOG_SCHEMA_VERSION}.`);
+  if (!isRecord(value) || value.schemaVersion !== MANIFEST_SCHEMA_VERSION) {
+    fail(`manifest.json must use schemaVersion ${MANIFEST_SCHEMA_VERSION}.`);
   }
   if (!Array.isArray(value.courses)) fail("manifest.json: courses must be an array.");
 
@@ -149,22 +167,28 @@ export function parseManifest(raw: string): CatalogManifest {
     return { id, file };
   });
 
-  return { schemaVersion: CATALOG_SCHEMA_VERSION, courses };
+  return { schemaVersion: MANIFEST_SCHEMA_VERSION, courses };
 }
 
 export function serializeManifest(entries: CourseFileEntry[]): string {
-  return `${JSON.stringify({ schemaVersion: CATALOG_SCHEMA_VERSION, courses: entries }, null, 2)}\n`;
+  return `${JSON.stringify({ schemaVersion: MANIFEST_SCHEMA_VERSION, courses: entries }, null, 2)}\n`;
 }
 
 export function parseCourseFile(raw: string, entry: CourseFileEntry): Catalog {
   const value = parseJson(raw, entry.file);
-  if (!isRecord(value) || value.schemaVersion !== CATALOG_SCHEMA_VERSION) {
-    fail(`${entry.file} must use schemaVersion ${CATALOG_SCHEMA_VERSION}.`);
+  if (
+    !isRecord(value) ||
+    (value.schemaVersion !== 1 && value.schemaVersion !== COURSE_SCHEMA_VERSION)
+  ) {
+    fail(`${entry.file} must use a supported schemaVersion.`);
   }
   const course = parseCourse(value.course, entry.file);
   if (course.id !== entry.id) fail(`${entry.file}: course.id does not match manifest.json.`);
   if (!Array.isArray(value.topics)) fail(`${entry.file}: topics must be an array.`);
   if (!Array.isArray(value.questions)) fail(`${entry.file}: questions must be an array.`);
+  if (value.schemaVersion === COURSE_SCHEMA_VERSION && !Array.isArray(value.notes)) {
+    fail(`${entry.file}: notes must be an array.`);
+  }
 
   const topics = value.topics.map((topic) => parseTopic(topic, course.id, entry.file));
   const topicIds = new Set(topics.map((topic) => topic.id));
@@ -175,7 +199,12 @@ export function parseCourseFile(raw: string, entry: CourseFileEntry): Catalog {
   if (new Set(questions.map((question) => question.id)).size !== questions.length) {
     fail(`${entry.file}: question IDs must be unique.`);
   }
-  return { courses: [course], topics, questions };
+  const noteValues: unknown[] = Array.isArray(value.notes) ? value.notes : [];
+  const notes = noteValues.map((note) => parseNote(note, course.id, entry.file));
+  if (new Set(notes.map((note) => note.id)).size !== notes.length) {
+    fail(`${entry.file}: note IDs must be unique.`);
+  }
+  return { courses: [course], topics, questions, notes };
 }
 
 export function serializeCourseFile(catalog: Catalog, courseId: string): string {
@@ -189,11 +218,15 @@ export function serializeCourseFile(catalog: Catalog, courseId: string): string 
   const questions = catalog.questions
     .filter((question) => question.courseId === courseId && topicIds.has(question.topicId))
     .map(({ courseId: _courseId, ...question }) => question);
+  const notes = catalog.notes
+    .filter((note) => note.courseId === courseId)
+    .map(({ courseId: _courseId, ...note }) => note);
   const file: CourseFile = {
-    schemaVersion: CATALOG_SCHEMA_VERSION,
+    schemaVersion: COURSE_SCHEMA_VERSION,
     course,
     topics,
     questions,
+    notes,
   };
   return `${JSON.stringify(file, null, 2)}\n`;
 }
@@ -204,6 +237,7 @@ export function combineCatalogs(parts: Catalog[]): Catalog {
       courses: [...combined.courses, ...part.courses],
       topics: [...combined.topics, ...part.topics],
       questions: [...combined.questions, ...part.questions],
+      notes: [...combined.notes, ...part.notes],
     }),
     { ...EMPTY_CATALOG },
   );
@@ -215,6 +249,9 @@ export function combineCatalogs(parts: Catalog[]): Catalog {
   }
   if (new Set(catalog.questions.map((question) => question.id)).size !== catalog.questions.length) {
     fail("question IDs must be unique across all files.");
+  }
+  if (new Set(catalog.notes.map((note) => note.id)).size !== catalog.notes.length) {
+    fail("note IDs must be unique across all files.");
   }
   return catalog;
 }

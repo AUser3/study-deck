@@ -78,7 +78,7 @@ function migrateVersionOne(value: Record<string, unknown>): unknown {
   if (!Array.isArray(value.questions)) return value;
   return {
     ...value,
-    version: APP_STATE_VERSION,
+    version: 2,
     questions: value.questions.map((item) => {
       if (!isRecord(item)) return item;
       const question = item as unknown as LegacyQuestion;
@@ -95,8 +95,14 @@ function migrateVersionOne(value: Record<string, unknown>): unknown {
   };
 }
 
+function migrateVersionTwo(value: unknown): unknown {
+  if (!isRecord(value) || value.version !== 2) return value;
+  return { ...value, version: APP_STATE_VERSION, notes: [] };
+}
+
 export function migrateAppState(value: unknown): AppState {
-  const migrated = isRecord(value) ? migrateVersionOne(value) : value;
+  const versionTwo = isRecord(value) ? migrateVersionOne(value) : value;
+  const migrated = migrateVersionTwo(versionTwo);
   return validateAppState(migrated);
 }
 
@@ -107,9 +113,10 @@ export function validateAppState(value: unknown): AppState {
   if (
     !Array.isArray(value.courses) ||
     !Array.isArray(value.topics) ||
-    !Array.isArray(value.questions)
+    !Array.isArray(value.questions) ||
+    !Array.isArray(value.notes)
   ) {
-    return invalid("courses, topics, and questions must be arrays.");
+    return invalid("courses, topics, questions, and notes must be arrays.");
   }
   if (!Array.isArray(value.attempts)) return invalid("attempts must be an array.");
 
@@ -125,9 +132,10 @@ export function validateAppState(value: unknown): AppState {
   if (
     catalog.courses.length !== candidate.courses.length ||
     catalog.topics.length !== candidate.topics.length ||
-    catalog.questions.length !== candidate.questions.length
+    catalog.questions.length !== candidate.questions.length ||
+    catalog.notes.length !== candidate.notes.length
   ) {
-    return invalid("every topic and question must belong to a saved course.");
+    return invalid("every topic, question, and note must belong to a saved course.");
   }
 
   const attempts = parseProgress(serializeProgress(candidate.attempts));

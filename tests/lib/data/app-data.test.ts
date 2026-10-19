@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { AppDataRepository } from "@/lib/data/app-data.server";
 import { parseManifest } from "@/lib/data/catalog";
-import type { AppState } from "@/lib/data/types";
+import { APP_STATE_VERSION, type AppState } from "@/lib/data/types";
 
 const directories: string[] = [];
 
@@ -43,7 +43,7 @@ describe("application-data repository", () => {
   it("round-trips courses and progress through JSON files", async () => {
     const data = await repository();
     const state: AppState = {
-      version: 2,
+      version: APP_STATE_VERSION,
       courses: [{ id: "course-1", name: "Networks", createdAt: 1 }],
       topics: [{ id: "topic-1", courseId: "course-1", name: "Routing", createdAt: 2 }],
       questions: [
@@ -59,6 +59,16 @@ describe("application-data repository", () => {
         },
       ],
       attempts: [{ id: "attempt-1", questionId: "question-1", correct: true, mode: "mc", at: 4 }],
+      notes: [
+        {
+          id: "note-1",
+          courseId: "course-1",
+          title: "Summary",
+          content: "Study OSPF",
+          createdAt: 5,
+          updatedAt: 5,
+        },
+      ],
     };
 
     expect(await data.save(state)).toEqual(state);
@@ -75,11 +85,12 @@ describe("application-data repository", () => {
     );
 
     const empty: AppState = {
-      version: 2,
+      version: APP_STATE_VERSION,
       courses: [],
       topics: [],
       questions: [],
       attempts: [],
+      notes: [],
     };
     await data.save(empty);
     expect(await data.load()).toEqual(empty);
@@ -90,11 +101,12 @@ describe("application-data repository", () => {
     const data = await repository();
     await expect(
       data.save({
-        version: 2,
+        version: APP_STATE_VERSION,
         courses: [],
         topics: [],
         questions: [],
         attempts: [{ id: "a", questionId: "missing", correct: true, mode: "mc", at: 1 }],
+        notes: [],
       }),
     ).rejects.toThrow(/existing question/);
   });
@@ -102,15 +114,23 @@ describe("application-data repository", () => {
   it("restores a backup through the same validated repository", async () => {
     const data = await repository();
     const original: AppState = {
-      version: 2,
+      version: APP_STATE_VERSION,
       courses: [{ id: "course-1", name: "Backup course", createdAt: 1 }],
       topics: [],
       questions: [],
       attempts: [],
+      notes: [],
     };
     await data.save(original);
     const backup = await data.createBackup();
-    await data.save({ version: 2, courses: [], topics: [], questions: [], attempts: [] });
+    await data.save({
+      version: APP_STATE_VERSION,
+      courses: [],
+      topics: [],
+      questions: [],
+      attempts: [],
+      notes: [],
+    });
 
     await expect(data.restoreBackup(backup)).resolves.toEqual(original);
     await expect(data.load()).resolves.toEqual(original);
