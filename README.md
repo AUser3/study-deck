@@ -64,7 +64,7 @@ the saved JSON.
   course, topic, question, attempt, and state operations.
 - `src/lib/data/app-data.functions.ts` is the browser-to-local-server boundary.
 - `src/lib/data/app-data.server.ts` owns private application-data filesystem access, while location
-  resolution and state validation live in focused sibling modules.
+  resolution, managed documents, backups, and state validation live in focused sibling modules.
 - `src/lib/data/catalog.ts` validates and serializes repository JSON.
 - `src/lib/data/progress.ts` owns all progress calculations.
 - `tests` contains the test suite and its shared browser setup.

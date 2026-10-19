@@ -61,10 +61,14 @@ change includes a deliberate migration.
 - Choice questions can have multiple correct answers and require at least one correct index.
 - Topics belong to courses, questions belong to a course and one of its topics, and attempts refer
   to existing questions.
-- Deleting a parent removes its dependent questions and attempts.
+- Notes and old exams belong to courses. Old-exam PDFs are managed under AppData, limited to 20 MiB,
+  and must never use a user-provided storage path.
+- Deleting a parent removes its dependent questions, attempts, notes, old exams, and managed PDFs.
 - IDs and creation timestamps are stable persisted values and must not be regenerated during reads
   or ordinary edits.
 - Text paste, JSON import, and manual entry all normalize into the same persisted question model.
+- Persisted schema changes include a backward-compatible migration and regression coverage. Backup
+  restores pass through normal state validation and include every referenced managed document.
 
 ## Mock and test data
 
