@@ -35,10 +35,11 @@ npm run preview
 - React
 - Tailwind CSS
 
-Studydeck stores courses, topics, questions, and progress as private JSON outside the repository.
-The local application server creates the directory and base files automatically on first use, and
-the browser UI reads and writes them through same-origin server functions. There is no database,
-folder picker, or browser permission popup.
+Studydeck stores courses, topics, questions, notes, old-exam metadata, and progress as private JSON
+outside the repository. Old-exam PDFs are managed beside that JSON. The local application server
+creates the directory and base files automatically on first use, and the browser UI reads and writes
+them through same-origin server functions. There is no database, folder picker, or browser
+permission popup.
 
 The default data directory depends on the operating system running `npm run dev`:
 
@@ -80,11 +81,15 @@ manifest.json
 progress.json
 courses/
   <course-name-and-id>.json
+documents/
+  <generated-id>.pdf
 ```
 
-`manifest.json` indexes course files, each course file contains that course's topics and questions,
-and `progress.json` contains study attempts. Use **Open data folder** in the app header to reveal the
-directory in your operating system's file manager. Back up this directory to preserve your data.
+`manifest.json` indexes course files, each course file contains that course's topics, questions,
+notes, and old-exam metadata, `documents/` contains managed PDF copies, and `progress.json` contains
+study attempts. Use **Data → Open data folder** in the app header to reveal the directory. Use
+**Data → Download backup** to create one portable JSON file containing both structured data and the
+managed PDFs; restoring a backup replaces the current data after confirmation.
 
 ## Generated build output
 

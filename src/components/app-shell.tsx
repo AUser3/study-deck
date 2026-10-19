@@ -3,6 +3,7 @@ import { BookOpenCheck, ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { DataActions } from "@/components/data-actions";
+import { SiteFooter } from "@/components/site-footer";
 
 export interface Crumb {
   label: string;
@@ -12,7 +13,7 @@ export interface Crumb {
 
 export function AppShell({ crumbs = [], children }: { crumbs?: Crumb[]; children: ReactNode }) {
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       <header className="border-b border-border bg-card/70 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
           <Link
@@ -50,7 +51,8 @@ export function AppShell({ crumbs = [], children }: { crumbs?: Crumb[]; children
           <DataActions />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">{children}</main>
+      <SiteFooter />
     </div>
   );
 }
