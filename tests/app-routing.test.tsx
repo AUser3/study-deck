@@ -22,4 +22,12 @@ describe("App routing", () => {
       "/courses/$courseId/notes",
     );
   });
+
+  it("matches the old exams workspace", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    expect(router.matchRoutes("/courses/course-1/old-exams").at(-1)?.routeId).toBe(
+      "/courses/$courseId/old-exams",
+    );
+  });
 });
