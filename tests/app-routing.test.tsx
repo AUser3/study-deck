@@ -14,4 +14,12 @@ describe("App routing", () => {
 
     expect(matches.at(-1)?.routeId).not.toBe(rootRouteId);
   });
+
+  it("matches the course notes workspace", () => {
+    const router = createRouter({ routeTree, context: { queryClient: new QueryClient() } });
+
+    expect(router.matchRoutes("/courses/course-1/notes").at(-1)?.routeId).toBe(
+      "/courses/$courseId/notes",
+    );
+  });
 });

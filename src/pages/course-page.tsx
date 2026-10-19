@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/empty-state";
 import { Loading } from "@/components/loading";
 import { ProgressBar } from "@/components/progress-bar";
 import { CourseDialog } from "@/features/courses/course-dialog";
+import { CourseSectionNav } from "@/features/courses/course-section-nav";
 import { QuestionDialog } from "@/features/questions/question-dialog";
 import { getStudyEligibility } from "@/features/study/eligibility";
 import { ModePicker } from "@/features/study/mode-picker";
@@ -124,6 +125,7 @@ export function CoursePage({ courseId }: { courseId: string }) {
           </Button>
         </div>
       </div>
+      <CourseSectionNav courseId={courseId} active="overview" />
 
       {topics.length === 0 ? (
         <div className="mt-8">

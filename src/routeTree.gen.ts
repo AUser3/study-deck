@@ -14,6 +14,7 @@ import { Route as StudyRouteImport } from './routes/study'
 import { Route as CoursesCourseIdRouteRouteImport } from './routes/courses/$courseId/route'
 import { Route as CoursesCourseIdIndexRouteImport } from './routes/courses/$courseId/index'
 import { Route as CoursesCourseIdImportRouteImport } from './routes/courses/$courseId/import'
+import { Route as CoursesCourseIdNotesRouteImport } from './routes/courses/$courseId/notes'
 import { Route as CoursesCourseIdTopicsTopicIdRouteImport } from './routes/courses/$courseId/topics/$topicId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -41,6 +42,11 @@ const CoursesCourseIdImportRoute = CoursesCourseIdImportRouteImport.update({
   path: '/import',
   getParentRoute: () => CoursesCourseIdRouteRoute,
 } as any)
+const CoursesCourseIdNotesRoute = CoursesCourseIdNotesRouteImport.update({
+  id: '/notes',
+  path: '/notes',
+  getParentRoute: () => CoursesCourseIdRouteRoute,
+} as any)
 const CoursesCourseIdTopicsTopicIdRoute =
   CoursesCourseIdTopicsTopicIdRouteImport.update({
     id: '/topics/$topicId',
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/study': typeof StudyRoute
   '/courses/$courseId': typeof CoursesCourseIdRouteRouteWithChildren
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
+  '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/topics/$topicId': typeof CoursesCourseIdTopicsTopicIdRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/study': typeof StudyRoute
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
+  '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
   '/courses/$courseId': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/topics/$topicId': typeof CoursesCourseIdTopicsTopicIdRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/study': typeof StudyRoute
   '/courses/$courseId': typeof CoursesCourseIdRouteRouteWithChildren
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
+  '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/topics/$topicId': typeof CoursesCourseIdTopicsTopicIdRoute
 }
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/study'
     | '/courses/$courseId'
     | '/courses/$courseId/import'
+    | '/courses/$courseId/notes'
     | '/courses/$courseId/'
     | '/courses/$courseId/topics/$topicId'
   fileRoutesByTo: FileRoutesByTo
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/study'
     | '/courses/$courseId/import'
+    | '/courses/$courseId/notes'
     | '/courses/$courseId'
     | '/courses/$courseId/topics/$topicId'
   id:
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/study'
     | '/courses/$courseId'
     | '/courses/$courseId/import'
+    | '/courses/$courseId/notes'
     | '/courses/$courseId/'
     | '/courses/$courseId/topics/$topicId'
   fileRoutesById: FileRoutesById
@@ -141,6 +153,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseIdImportRouteImport
       parentRoute: typeof CoursesCourseIdRouteRoute
     }
+    '/courses/$courseId/notes': {
+      id: '/courses/$courseId/notes'
+      path: '/notes'
+      fullPath: '/courses/$courseId/notes'
+      preLoaderRoute: typeof CoursesCourseIdNotesRouteImport
+      parentRoute: typeof CoursesCourseIdRouteRoute
+    }
     '/courses/$courseId/topics/$topicId': {
       id: '/courses/$courseId/topics/$topicId'
       path: '/topics/$topicId'
@@ -153,12 +172,14 @@ declare module '@tanstack/react-router' {
 
 interface CoursesCourseIdRouteRouteChildren {
   CoursesCourseIdImportRoute: typeof CoursesCourseIdImportRoute
+  CoursesCourseIdNotesRoute: typeof CoursesCourseIdNotesRoute
   CoursesCourseIdIndexRoute: typeof CoursesCourseIdIndexRoute
   CoursesCourseIdTopicsTopicIdRoute: typeof CoursesCourseIdTopicsTopicIdRoute
 }
 
 const CoursesCourseIdRouteRouteChildren: CoursesCourseIdRouteRouteChildren = {
   CoursesCourseIdImportRoute: CoursesCourseIdImportRoute,
+  CoursesCourseIdNotesRoute: CoursesCourseIdNotesRoute,
   CoursesCourseIdIndexRoute: CoursesCourseIdIndexRoute,
   CoursesCourseIdTopicsTopicIdRoute: CoursesCourseIdTopicsTopicIdRoute,
 }
