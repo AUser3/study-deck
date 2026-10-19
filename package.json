@@ -1,6 +1,7 @@
 {
   "name": "studydeck",
   "private": true,
+  "license": "MIT",
   "packageManager": "npm@11.19.0",
   "engines": {
     "node": ">=22.12"

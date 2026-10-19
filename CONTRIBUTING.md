@@ -3,6 +3,13 @@
 Thank you for helping improve Studydeck. Keep changes focused, explain the behavior they change, and
 leave the repository easier to understand than you found it.
 
+The MIT License allows anyone to use, modify, and redistribute their own copy of Studydeck. To
+contribute a change to the official repository, open a pull request or work directly in the
+repository only when the maintainer has explicitly granted you collaborator access.
+
+Report suspected vulnerabilities privately by following [SECURITY.md](SECURITY.md), never through a
+public issue or pull request.
+
 ## Development setup
 
 Studydeck requires Node.js 22.12 or newer and npm.

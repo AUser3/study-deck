@@ -97,3 +97,14 @@ Running `npm run build` creates `.output/`, including the browser assets under `
 Node server bundle under `server/`, and Nitro's build metadata. It is required only to run that
 particular production build. The directory is ignored by Git and can be deleted at any time;
 `npm run build` recreates it.
+
+## Community and support
+
+- Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change.
+- Use [SUPPORT.md](SUPPORT.md) for questions, bug reports, and feature requests.
+- Report vulnerabilities privately by following [SECURITY.md](SECURITY.md).
+
+## License
+
+Studydeck is available under the [MIT License](LICENSE). You may use, copy, modify, and redistribute
+the project under the terms of that license.
