@@ -4,7 +4,8 @@ import {
   serializeCourseFile,
   type CourseFileEntry,
 } from "./catalog";
-import type { AppState, Attempt } from "./types";
+import { APP_STATE_VERSION } from "./types";
+import type { AppState, Attempt, Question } from "./types";
 
 export const PROGRESS_FILE = "progress.json";
 const PROGRESS_SCHEMA_VERSION = 1 as const;
@@ -67,9 +68,41 @@ export function serializeProgress(attempts: Attempt[]): string {
   return `${JSON.stringify({ schemaVersion: PROGRESS_SCHEMA_VERSION, attempts }, null, 2)}\n`;
 }
 
+type LegacyQuestion = Omit<Question, "correctIndices"> & {
+  correctIndices?: number[];
+  correctIndex?: number;
+};
+
+function migrateVersionOne(value: Record<string, unknown>): unknown {
+  if (value.version !== 1 && value.version !== undefined) return value;
+  if (!Array.isArray(value.questions)) return value;
+  return {
+    ...value,
+    version: APP_STATE_VERSION,
+    questions: value.questions.map((item) => {
+      if (!isRecord(item)) return item;
+      const question = item as unknown as LegacyQuestion;
+      const { correctIndex, ...current } = question;
+      return {
+        ...current,
+        correctIndices: Array.isArray(question.correctIndices)
+          ? question.correctIndices
+          : typeof correctIndex === "number"
+            ? [correctIndex]
+            : [],
+      };
+    }),
+  };
+}
+
+export function migrateAppState(value: unknown): AppState {
+  const migrated = isRecord(value) ? migrateVersionOne(value) : value;
+  return validateAppState(migrated);
+}
+
 export function validateAppState(value: unknown): AppState {
-  if (!isRecord(value) || value.version !== 2) {
-    return invalid("application state must use version 2.");
+  if (!isRecord(value) || value.version !== APP_STATE_VERSION) {
+    return invalid(`application state must use version ${APP_STATE_VERSION}.`);
   }
   if (
     !Array.isArray(value.courses) ||
@@ -102,5 +135,5 @@ export function validateAppState(value: unknown): AppState {
   if (attempts.some((attempt) => !questionIds.has(attempt.questionId))) {
     return invalid("every attempt must reference an existing question.");
   }
-  return { version: 2, ...catalog, attempts };
+  return { version: APP_STATE_VERSION, ...catalog, attempts };
 }

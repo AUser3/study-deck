@@ -1,5 +1,6 @@
 export type ID = string;
 export const MAX_ANSWER_CHOICES = 16;
+export const APP_STATE_VERSION = 2 as const;
 
 export interface Course {
   id: ID;
@@ -41,7 +42,7 @@ export interface Attempt {
 }
 
 export interface AppState {
-  version: 2;
+  version: typeof APP_STATE_VERSION;
   courses: Course[];
   topics: Topic[];
   questions: Question[];

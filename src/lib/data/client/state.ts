@@ -2,9 +2,10 @@ import { useSyncExternalStore } from "react";
 
 import { loadStudyData, openStudyDataDirectory, saveStudyData } from "../app-data.functions";
 import { EMPTY_CATALOG } from "../catalog";
+import { APP_STATE_VERSION } from "../types";
 import type { AppState } from "../types";
 
-const EMPTY: AppState = { version: 2, ...EMPTY_CATALOG, attempts: [] };
+const EMPTY: AppState = { version: APP_STATE_VERSION, ...EMPTY_CATALOG, attempts: [] };
 const SERVER_STATE: AppState & { __server?: true } = { ...EMPTY, __server: true };
 
 let state: AppState = EMPTY;

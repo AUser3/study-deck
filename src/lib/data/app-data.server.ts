@@ -5,6 +5,7 @@ import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { resolveAppDataDirectory } from "./app-data-location.server";
+import { parseBackup, serializeBackup } from "./backup";
 import {
   EMPTY_PROGRESS,
   parseProgress,
@@ -21,6 +22,7 @@ import {
   type Catalog,
   type CourseFileEntry,
 } from "./catalog";
+import { APP_STATE_VERSION } from "./types";
 import type { AppState } from "./types";
 
 const MANIFEST_FILE = "manifest.json";
@@ -71,38 +73,59 @@ export class AppDataRepository {
       const next = validateAppState(value);
       await this.ensureBaseFiles();
       const previous = await this.readState();
-      const manifest = parseManifest(await this.read(MANIFEST_FILE));
-      const oldEntries = manifest.courses;
-      const oldById = new Map(oldEntries.map((entry) => [entry.id, entry]));
-      const usedFiles = new Set(oldEntries.map((entry) => entry.file));
-      const nextEntries = next.courses.map(
-        (course) => oldById.get(course.id) ?? createEntry(next, course.id, usedFiles),
-      );
-
-      for (const entry of nextEntries) {
-        const before = previous.courses.some((course) => course.id === entry.id)
-          ? serializeCourseFile(previous, entry.id)
-          : null;
-        const after = serializeCourseFile(next, entry.id);
-        if (before !== after) await this.atomicWrite(entry.file, after);
-      }
-
-      const previousProgress = serializeProgress(previous.attempts);
-      const nextProgress = serializeProgress(next.attempts);
-      if (previousProgress !== nextProgress) await this.atomicWrite(PROGRESS_FILE, nextProgress);
-
-      const previousManifest = serializeManifest(oldEntries);
-      const nextManifest = serializeManifest(nextEntries);
-      if (previousManifest !== nextManifest) await this.atomicWrite(MANIFEST_FILE, nextManifest);
-
-      const nextIds = new Set(nextEntries.map((entry) => entry.id));
-      for (const entry of oldEntries) {
-        if (!nextIds.has(entry.id)) {
-          await rm(path.join(this.directory, entry.file), { force: true });
-        }
-      }
+      await this.writeState(next, previous);
       return next;
     });
+  }
+
+  createBackup(): Promise<string> {
+    return this.exclusive(async () => {
+      await this.ensureBaseFiles();
+      return serializeBackup(await this.readState());
+    });
+  }
+
+  restoreBackup(raw: string): Promise<AppState> {
+    const backup = parseBackup(raw);
+    return this.exclusive(async () => {
+      await this.ensureBaseFiles();
+      const previous = await this.readState();
+      await this.writeState(backup.state, previous);
+      return backup.state;
+    });
+  }
+
+  private async writeState(next: AppState, previous: AppState): Promise<void> {
+    const manifest = parseManifest(await this.read(MANIFEST_FILE));
+    const oldEntries = manifest.courses;
+    const oldById = new Map(oldEntries.map((entry) => [entry.id, entry]));
+    const usedFiles = new Set(oldEntries.map((entry) => entry.file));
+    const nextEntries = next.courses.map(
+      (course) => oldById.get(course.id) ?? createEntry(next, course.id, usedFiles),
+    );
+
+    for (const entry of nextEntries) {
+      const before = previous.courses.some((course) => course.id === entry.id)
+        ? serializeCourseFile(previous, entry.id)
+        : null;
+      const after = serializeCourseFile(next, entry.id);
+      if (before !== after) await this.atomicWrite(entry.file, after);
+    }
+
+    const previousProgress = serializeProgress(previous.attempts);
+    const nextProgress = serializeProgress(next.attempts);
+    if (previousProgress !== nextProgress) await this.atomicWrite(PROGRESS_FILE, nextProgress);
+
+    const previousManifest = serializeManifest(oldEntries);
+    const nextManifest = serializeManifest(nextEntries);
+    if (previousManifest !== nextManifest) await this.atomicWrite(MANIFEST_FILE, nextManifest);
+
+    const nextIds = new Set(nextEntries.map((entry) => entry.id));
+    for (const entry of oldEntries) {
+      if (!nextIds.has(entry.id)) {
+        await rm(path.join(this.directory, entry.file), { force: true });
+      }
+    }
   }
 
   private exclusive<T>(operation: () => Promise<T>): Promise<T> {
@@ -152,7 +175,7 @@ export class AppDataRepository {
     if (attempts.some((attempt) => !questionIds.has(attempt.questionId))) {
       throw new Error(`Invalid study data: ${PROGRESS_FILE} references a missing question.`);
     }
-    return { version: 2, ...catalog, attempts };
+    return { version: APP_STATE_VERSION, ...catalog, attempts };
   }
 
   private async atomicWrite(file: string, contents: string): Promise<void> {

@@ -98,4 +98,21 @@ describe("application-data repository", () => {
       }),
     ).rejects.toThrow(/existing question/);
   });
+
+  it("restores a backup through the same validated repository", async () => {
+    const data = await repository();
+    const original: AppState = {
+      version: 2,
+      courses: [{ id: "course-1", name: "Backup course", createdAt: 1 }],
+      topics: [],
+      questions: [],
+      attempts: [],
+    };
+    await data.save(original);
+    const backup = await data.createBackup();
+    await data.save({ version: 2, courses: [], topics: [], questions: [], attempts: [] });
+
+    await expect(data.restoreBackup(backup)).resolves.toEqual(original);
+    await expect(data.load()).resolves.toEqual(original);
+  });
 });
