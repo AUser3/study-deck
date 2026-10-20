@@ -1,0 +1,32 @@
+[tool.towncrier]
+package = "studydeck"
+package_dir = "."
+filename = "CHANGELOG.md"
+directory = "changes"
+title_format = "## {version} ({project_date})"
+issue_format = "[{issue}](https://github.com/AUser3/study-deck/issues/{issue})"
+
+[[tool.towncrier.type]]
+directory = "feature"
+name = "Features"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "bugfix"
+name = "Bug fixes"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "doc"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "removal"
+name = "Removals"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Miscellaneous"
+showcontent = true

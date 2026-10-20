@@ -1,6 +1,6 @@
 # Studydeck
 
-A local-first flashcard app for organizing courses and topics, importing question banks, and studying with several practice modes.
+A local-first flashcard app for organizing courses and topics, importing question banks, and studying with several practice modes. Studydeck is pre-release software targeting version `0.1.0`; expect breaking changes and limited support while the project is prepared for its first public release.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for architecture boundaries, development conventions, and the
 pull-request checklist.
@@ -103,6 +103,9 @@ particular production build. The directory is ignored by Git and can be deleted 
 - Read [CONTRIBUTING.md](CONTRIBUTING.md) before proposing a change.
 - Use [SUPPORT.md](SUPPORT.md) for questions, bug reports, and feature requests.
 - Report vulnerabilities privately by following [SECURITY.md](SECURITY.md).
+
+Studydeck is not public yet. Until the first release, support is best-effort and contributions are
+accepted only through the maintainer-approved workflow described in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 

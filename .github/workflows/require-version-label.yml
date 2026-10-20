@@ -1,0 +1,18 @@
+name: Require version label
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited, labeled, unlabeled, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  require-version-label:
+    name: Require exactly one version label
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check version label
+        run: python tools/versioning/validate_version_labels.py --event-file "$GITHUB_EVENT_PATH"
