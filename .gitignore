@@ -16,6 +16,25 @@ dist-ssr
 .nitro
 *.local
 
+# Local environment files and private keys
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.ppk
+*.jks
+*.keystore
+id_rsa
+id_dsa
+id_ecdsa
+id_ed25519
+
+# Local application data can contain personal study material
+[Aa]pp[Dd]ata/
+
 /docs/
 
 # Wrangler / Cloudflare
