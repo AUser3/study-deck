@@ -1,0 +1,41 @@
+name: Limit open pull requests
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  one-open-pull-request:
+    name: One open pull request per contributor
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check contributor pull requests
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const author = context.payload.pull_request.user.login;
+            const exemptUsers = new Set(["dependabot[bot]", "github-actions[bot]"]);
+            if (exemptUsers.has(author)) {
+              core.info(`Skipping exempt contributor: ${author}`);
+              return;
+            }
+
+            const query = [
+              `repo:${context.repo.owner}/${context.repo.repo}`,
+              "is:pr",
+              "is:open",
+              `author:${author}`,
+            ].join(" ");
+
+            const result = await github.rest.search.issuesAndPullRequests({q: query});
+            if (result.data.total_count > 1) {
+              core.setFailed(
+                `${author} has ${result.data.total_count} open pull requests. Contributors may have only one open pull request at a time.`,
+              );
+            } else {
+              core.info(`${author} has one open pull request.`);
+            }
