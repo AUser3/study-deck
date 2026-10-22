@@ -1,0 +1,74 @@
+name: Bump version on main merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: version-bump-main
+  cancel-in-progress: false
+
+jobs:
+  bump-version:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate App token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.VERSION_BOT_APP_ID }}
+          private-key: ${{ secrets.VERSION_BOT_APP_PRIVATE_KEY }}
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ steps.app-token.outputs.token }}
+      - name: Check whether this pull request was already versioned
+        id: already-versioned
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          existing_commit="$(git log --grep="Version bump for PR #${PR_NUMBER}" --format=%H -n 1)"
+          if [ -n "$existing_commit" ]; then
+            existing_version="$(git show "${existing_commit}:VERSION")"
+            existing_tag="v${existing_version}"
+            if ! git rev-parse --verify --quiet "refs/tags/${existing_tag}" >/dev/null; then
+              git tag -a "${existing_tag}" "${existing_commit}" -m "Version ${existing_tag} for PR #${PR_NUMBER}"
+              git push origin "${existing_tag}"
+            fi
+            echo "already_versioned=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_versioned=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Read version label
+        if: steps.already-versioned.outputs.already_versioned == 'false'
+        id: version-label
+        run: |
+          label="$(python tools/versioning/validate_version_labels.py --event-file "$GITHUB_EVENT_PATH")"
+          echo "label=$label" >> "$GITHUB_OUTPUT"
+      - name: Bump VERSION
+        if: steps.already-versioned.outputs.already_versioned == 'false'
+        id: bump-version
+        run: |
+          next_version="$(python tools/versioning/bump_version.py --label "${{ steps.version-label.outputs.label }}" --version-file VERSION)"
+          echo "tag=v$next_version" >> "$GITHUB_OUTPUT"
+      - name: Commit version bump and tag
+        if: steps.already-versioned.outputs.already_versioned == 'false'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          NEXT_TAG: ${{ steps.bump-version.outputs.tag }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add VERSION
+          git commit -m "chore: bump version to ${NEXT_TAG}" -m "Version bump for PR #${PR_NUMBER}"
+          git tag -a "${NEXT_TAG}" -m "Version ${NEXT_TAG} for PR #${PR_NUMBER}"
+          git push origin HEAD:main
+          git push origin "${NEXT_TAG}"

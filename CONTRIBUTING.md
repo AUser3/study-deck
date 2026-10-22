@@ -10,6 +10,11 @@ repository only when the maintainer has explicitly granted you collaborator acce
 Report suspected vulnerabilities privately by following [SECURITY.md](SECURITY.md), never through a
 public issue or pull request.
 
+Studydeck is currently pre-release and targets version `0.1.0`. Contributions should be narrowly
+scoped, include tests where practical, and must not include personal study data. A contributor may
+have only one open pull request at a time; maintainers and dependency-update bots may be exempted
+when repository policy requires it.
+
 ## Development setup
 
 Studydeck requires Node.js 22.12 or newer and npm.
@@ -126,3 +131,12 @@ actually checked. Do not describe visual testing as completed when it was not pe
   change.
 - Update documentation when setup, architecture, storage, commands, or contributor workflow
   changes.
+
+## Changelog fragments
+
+User-visible changes use a fragment in `changes/` named `<short-description>.<type>.md`, where the
+type is one of `feature`, `bugfix`, `doc`, `removal`, or `misc`. A fragment contains a concise
+description. Preview and assemble release notes with the project's Towncrier tooling when preparing
+a release; Towncrier is a release-time tool and is not an application runtime dependency. Use
+`skip-changelog` only for changes with no user-visible or maintainer-visible impact, and explain the
+exception in the PR.
