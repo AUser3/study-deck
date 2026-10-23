@@ -33,7 +33,11 @@ export function TypedAnswerCard({ question, onResult, onNext, last }: QuestionCa
   });
 
   return (
-    <div className="mt-8">
+    <div className="surface mt-8 rounded-[2rem] p-5 sm:p-8">
+      <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+        <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_currentColor]" />
+        Recall from memory
+      </div>
       <h1 className="text-2xl font-semibold leading-snug sm:text-3xl">{question.text}</h1>
       <Input
         ref={inputRef}
