@@ -164,7 +164,7 @@ export function StudySession({ courseId, topicIds, mode }: StudySessionProps) {
 
 function StudyFrame({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[radial-gradient(circle_at_50%_0%,oklch(0.92_0.08_190_/_28%),transparent_34rem)]">
       <div className="mx-auto max-w-2xl px-4 py-8 sm:py-14">{children}</div>
     </div>
   );

@@ -48,7 +48,11 @@ export function MultipleChoiceCard({ question, onResult, onNext, last }: Questio
   });
 
   return (
-    <div className="mt-8">
+    <div className="surface mt-8 rounded-[2rem] p-5 sm:p-8">
+      <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+        <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_currentColor]" />
+        Choose your answer
+      </div>
       <h1 className="text-2xl font-semibold leading-snug sm:text-3xl">{question.text}</h1>
       <p className="mt-3 text-sm text-muted-foreground">Select all correct answers.</p>
       <div role="group" aria-label="Answer choices" className="mt-6 space-y-2">
@@ -75,8 +79,9 @@ export function MultipleChoiceCard({ question, onResult, onNext, last }: Questio
                 "flex w-full items-center gap-3 rounded-xl border-2 bg-card px-4 py-3 text-left transition",
                 state === "idle" && "border-border hover:border-primary/40",
                 state === "selected" && "border-primary bg-secondary",
-                state === "correct" && "border-success bg-success-soft",
-                state === "wrong" && "border-destructive bg-danger-soft",
+                state === "correct" &&
+                  "answer-pop border-success bg-success-soft shadow-lg shadow-success/15",
+                state === "wrong" && "answer-shake border-destructive bg-danger-soft",
               )}
             >
               <kbd className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-xs font-semibold">
@@ -135,7 +140,13 @@ function AnswerFeedback({
   return (
     <div
       role="status"
-      className={cn("mt-5 rounded-xl p-4", correct ? "bg-success-soft" : "bg-danger-soft")}
+      className={cn(
+        "mt-5 rounded-2xl border",
+        correct
+          ? "answer-pop border-success/30 bg-success-soft"
+          : "answer-shake border-destructive/30 bg-danger-soft",
+        "p-4",
+      )}
     >
       <p
         className={cn(

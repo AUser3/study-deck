@@ -14,13 +14,15 @@ export interface Crumb {
 export function AppShell({ crumbs = [], children }: { crumbs?: Crumb[]; children: ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b border-border bg-card/85 backdrop-blur-lg">
+      <header className="sticky top-0 z-40 border-b border-border/70 bg-card/70 backdrop-blur-xl">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:px-6">
           <Link
             to="/"
-            className="flex items-center gap-2 font-display text-lg font-semibold text-foreground"
+            className="group flex items-center gap-2 font-display text-lg font-semibold text-foreground"
           >
-            <BookOpenCheck className="h-5 w-5 text-primary" aria-hidden />
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform group-hover:rotate-[-8deg]">
+              <BookOpenCheck className="h-4 w-4" aria-hidden />
+            </span>
             Studydeck
           </Link>
           {crumbs.length > 0 && (
