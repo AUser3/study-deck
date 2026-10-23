@@ -174,11 +174,16 @@ export function CoursePage({ courseId }: { courseId: string }) {
                   <li
                     key={t.id}
                     className={cn(
-                      "group relative flex items-center gap-4 overflow-hidden rounded-2xl border p-4 transition-all duration-300",
+                      "group relative flex cursor-pointer items-center gap-4 overflow-hidden rounded-2xl border p-4 transition-all duration-300",
                       isSelected
                         ? "border-primary/50 bg-primary/[0.07] shadow-lg shadow-primary/10"
                         : "surface hover:-translate-y-0.5 hover:border-primary/30",
                     )}
+                    onClick={(event) => {
+                      const target = event.target as HTMLElement;
+                      if (target.closest("button, a, input")) return;
+                      toggle(t.id);
+                    }}
                   >
                     <span
                       className={cn(
