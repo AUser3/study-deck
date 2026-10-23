@@ -15,6 +15,7 @@ import { QuestionDialog } from "@/features/questions/question-dialog";
 import { getStudyEligibility } from "@/features/study/eligibility";
 import { ModePicker } from "@/features/study/mode-picker";
 import { TopicDialog } from "@/features/topics/topic-dialog";
+import { cn } from "@/lib/utils";
 import {
   addQuestions,
   createTopic,
@@ -164,14 +165,30 @@ export function CoursePage({ courseId }: { courseId: string }) {
                 Study all topics
               </label>
             </div>
-            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-card">
+            <ul className="grid gap-3">
               {topics.map((t) => {
                 const qs = courseQs.filter((q) => q.topicId === t.id);
                 const tp = computeProgress(qs, byQ);
+                const isSelected = selected.has(t.id);
                 return (
-                  <li key={t.id} className="flex items-center gap-4 px-4 py-3">
+                  <li
+                    key={t.id}
+                    className={cn(
+                      "group relative flex items-center gap-4 overflow-hidden rounded-2xl border p-4 transition-all duration-300",
+                      isSelected
+                        ? "border-primary/50 bg-primary/[0.07] shadow-lg shadow-primary/10"
+                        : "surface hover:-translate-y-0.5 hover:border-primary/30",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute inset-y-0 left-0 w-1 origin-bottom bg-primary transition-transform duration-300",
+                        isSelected ? "scale-y-100" : "scale-y-0 group-hover:scale-y-60",
+                      )}
+                      aria-hidden
+                    />
                     <Checkbox
-                      checked={selected.has(t.id)}
+                      checked={isSelected}
                       onCheckedChange={() => toggle(t.id)}
                       aria-label={`Select ${t.name}`}
                     />
@@ -187,7 +204,7 @@ export function CoursePage({ courseId }: { courseId: string }) {
                         {qs.length} questions · {pct(tp.completion)} complete · {pct(tp.mastery)}{" "}
                         mastery
                       </p>
-                      <div className="mt-1.5 max-w-xs">
+                      <div className="mt-2 max-w-xs">
                         <ProgressBar
                           value={tp.mastery}
                           label={`${t.name} mastery`}
@@ -217,39 +234,51 @@ export function CoursePage({ courseId }: { courseId: string }) {
             </ul>
           </section>
 
-          <aside className="h-fit rounded-xl border border-border bg-card p-5 shadow-card lg:sticky lg:top-6">
-            <h2 className="text-lg font-semibold">Study session</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {chosenIds.length
-                ? `${chosenIds.length} of ${topics.length} topics selected`
-                : "Select one or more topics."}
-            </p>
-            <div className="mt-4">
-              <ModePicker value={mode} onChange={setMode} />
+          <aside className="mesh-gradient relative h-fit overflow-hidden rounded-3xl border border-white/70 p-5 shadow-card lg:sticky lg:top-6">
+            <div className="relative">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="text-xl font-semibold">Study session</h2>
+                <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+                  Focus mode
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {chosenIds.length
+                  ? `${chosenIds.length} of ${topics.length} topics selected`
+                  : "Select one or more topics."}
+              </p>
+              <div className="mt-5">
+                <ModePicker value={mode} onChange={setMode} />
+              </div>
+              <div className="mt-4 text-sm" aria-live="polite">
+                {chosenIds.length > 0 && (
+                  <p>
+                    <strong>{el.eligible}</strong> of {chosenQs.length} questions available.
+                  </p>
+                )}
+                {mode === "mc" && el.skipped > 0 && (
+                  <p className="mt-2 flex gap-2 rounded-md bg-warning-soft p-2.5 text-xs text-foreground">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-warning" />
+                    {el.skipped} selected {el.skipped === 1 ? "question has" : "questions have"} no
+                    answer choices and will be skipped in multiple choice. Use typed answer to
+                    include {el.skipped === 1 ? "it" : "them"}.
+                  </p>
+                )}
+                {chosenIds.length > 0 && el.eligible === 0 && (
+                  <p className="mt-2 rounded-md bg-danger-soft p-2.5 text-xs text-destructive">
+                    No eligible questions for this mode. Add questions or switch mode.
+                  </p>
+                )}
+              </div>
+              <Button
+                className="mt-5 w-full shadow-xl shadow-primary/20"
+                size="lg"
+                disabled={el.eligible === 0}
+                onClick={start}
+              >
+                <Play className="h-4 w-4" /> Start studying
+              </Button>
             </div>
-            <div className="mt-4 text-sm" aria-live="polite">
-              {chosenIds.length > 0 && (
-                <p>
-                  <strong>{el.eligible}</strong> of {chosenQs.length} questions available.
-                </p>
-              )}
-              {mode === "mc" && el.skipped > 0 && (
-                <p className="mt-2 flex gap-2 rounded-md bg-warning-soft p-2.5 text-xs text-foreground">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-warning" />
-                  {el.skipped} selected {el.skipped === 1 ? "question has" : "questions have"} no
-                  answer choices and will be skipped in multiple choice. Use typed answer to include{" "}
-                  {el.skipped === 1 ? "it" : "them"}.
-                </p>
-              )}
-              {chosenIds.length > 0 && el.eligible === 0 && (
-                <p className="mt-2 rounded-md bg-danger-soft p-2.5 text-xs text-destructive">
-                  No eligible questions for this mode. Add questions or switch mode.
-                </p>
-              )}
-            </div>
-            <Button className="mt-4 w-full" size="lg" disabled={el.eligible === 0} onClick={start}>
-              <Play className="h-4 w-4" /> Start studying
-            </Button>
           </aside>
         </div>
       )}
