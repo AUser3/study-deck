@@ -1,6 +1,16 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { AlertCircle, FileUp, FolderPlus, Layers, Pencil, Play, Plus, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  FileUp,
+  FolderPlus,
+  Layers,
+  Pencil,
+  Play,
+  Plus,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,6 +31,7 @@ import {
   createTopic,
   deleteTopic,
   renameTopic,
+  toggleTopicFavorite,
   updateCourse,
   useAppState,
 } from "@/lib/data/store";
@@ -36,6 +47,7 @@ export function CoursePage({ courseId }: { courseId: string }) {
   const [newTopic, setNewTopic] = useState(false);
   const [renaming, setRenaming] = useState<Topic | null>(null);
   const [deleting, setDeleting] = useState<Topic | null>(null);
+  const [unfavoriting, setUnfavoriting] = useState<Topic | null>(null);
   const [editCourse, setEditCourse] = useState(false);
   const [addingQTopic, setAddingQTopic] = useState<Topic | null>(null);
 
@@ -218,6 +230,23 @@ export function CoursePage({ courseId }: { courseId: string }) {
                       </div>
                     </div>
                     <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={
+                        t.favorite
+                          ? `Remove ${t.name} from favourites`
+                          : `Add ${t.name} to favourites`
+                      }
+                      onClick={() =>
+                        t.favorite ? setUnfavoriting(t) : void toggleTopicFavorite(t.id, true)
+                      }
+                    >
+                      <Star
+                        className={t.favorite ? "text-warning" : "text-muted-foreground"}
+                        fill={t.favorite ? "currentColor" : "none"}
+                      />
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setAddingQTopic(t)}
@@ -312,6 +341,16 @@ export function CoursePage({ courseId }: { courseId: string }) {
         onSubmit={async (n) => {
           await renameTopic(renaming!.id, n);
           setRenaming(null);
+        }}
+      />
+      <ConfirmDialog
+        open={!!unfavoriting}
+        onOpenChange={(o) => !o && setUnfavoriting(null)}
+        title="Remove topic from favourites?"
+        description={unfavoriting?.name}
+        onConfirm={async () => {
+          await toggleTopicFavorite(unfavoriting!.id, false);
+          setUnfavoriting(null);
         }}
       />
       <ConfirmDialog

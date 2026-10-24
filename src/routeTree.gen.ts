@@ -20,6 +20,7 @@ import { Route as CoursesCourseIdFavouritesRouteImport } from './routes/courses/
 import { Route as CoursesCourseIdImportRouteImport } from './routes/courses/$courseId/import'
 import { Route as CoursesCourseIdNotesRouteImport } from './routes/courses/$courseId/notes'
 import { Route as CoursesCourseIdOldExamsRouteImport } from './routes/courses/$courseId/old-exams'
+import { Route as CoursesCourseIdPinnedRouteImport } from './routes/courses/$courseId/pinned'
 import { Route as CoursesCourseIdTopicsTopicIdRouteImport } from './routes/courses/$courseId/topics/$topicId'
 
 const IndexRoute = IndexRouteImport.update({
@@ -78,6 +79,11 @@ const CoursesCourseIdOldExamsRoute = CoursesCourseIdOldExamsRouteImport.update({
   path: '/old-exams',
   getParentRoute: () => CoursesCourseIdRouteRoute,
 } as any)
+const CoursesCourseIdPinnedRoute = CoursesCourseIdPinnedRouteImport.update({
+  id: '/pinned',
+  path: '/pinned',
+  getParentRoute: () => CoursesCourseIdRouteRoute,
+} as any)
 const CoursesCourseIdTopicsTopicIdRoute =
   CoursesCourseIdTopicsTopicIdRouteImport.update({
     id: '/topics/$topicId',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
   '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
   '/courses/$courseId/old-exams': typeof CoursesCourseIdOldExamsRoute
+  '/courses/$courseId/pinned': typeof CoursesCourseIdPinnedRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/topics/$topicId': typeof CoursesCourseIdTopicsTopicIdRoute
 }
@@ -109,6 +116,7 @@ export interface FileRoutesByTo {
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
   '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
   '/courses/$courseId/old-exams': typeof CoursesCourseIdOldExamsRoute
+  '/courses/$courseId/pinned': typeof CoursesCourseIdPinnedRoute
   '/courses/$courseId': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/topics/$topicId': typeof CoursesCourseIdTopicsTopicIdRoute
 }
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
   '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
   '/courses/$courseId/old-exams': typeof CoursesCourseIdOldExamsRoute
+  '/courses/$courseId/pinned': typeof CoursesCourseIdPinnedRoute
   '/courses/$courseId/': typeof CoursesCourseIdIndexRoute
   '/courses/$courseId/topics/$topicId': typeof CoursesCourseIdTopicsTopicIdRoute
 }
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId/import'
     | '/courses/$courseId/notes'
     | '/courses/$courseId/old-exams'
+    | '/courses/$courseId/pinned'
     | '/courses/$courseId/'
     | '/courses/$courseId/topics/$topicId'
   fileRoutesByTo: FileRoutesByTo
@@ -153,6 +163,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId/import'
     | '/courses/$courseId/notes'
     | '/courses/$courseId/old-exams'
+    | '/courses/$courseId/pinned'
     | '/courses/$courseId'
     | '/courses/$courseId/topics/$topicId'
   id:
@@ -167,6 +178,7 @@ export interface FileRouteTypes {
     | '/courses/$courseId/import'
     | '/courses/$courseId/notes'
     | '/courses/$courseId/old-exams'
+    | '/courses/$courseId/pinned'
     | '/courses/$courseId/'
     | '/courses/$courseId/topics/$topicId'
   fileRoutesById: FileRoutesById
@@ -259,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseIdOldExamsRouteImport
       parentRoute: typeof CoursesCourseIdRouteRoute
     }
+    '/courses/$courseId/pinned': {
+      id: '/courses/$courseId/pinned'
+      path: '/pinned'
+      fullPath: '/courses/$courseId/pinned'
+      preLoaderRoute: typeof CoursesCourseIdPinnedRouteImport
+      parentRoute: typeof CoursesCourseIdRouteRoute
+    }
     '/courses/$courseId/topics/$topicId': {
       id: '/courses/$courseId/topics/$topicId'
       path: '/topics/$topicId'
@@ -274,6 +293,7 @@ interface CoursesCourseIdRouteRouteChildren {
   CoursesCourseIdImportRoute: typeof CoursesCourseIdImportRoute
   CoursesCourseIdNotesRoute: typeof CoursesCourseIdNotesRoute
   CoursesCourseIdOldExamsRoute: typeof CoursesCourseIdOldExamsRoute
+  CoursesCourseIdPinnedRoute: typeof CoursesCourseIdPinnedRoute
   CoursesCourseIdIndexRoute: typeof CoursesCourseIdIndexRoute
   CoursesCourseIdTopicsTopicIdRoute: typeof CoursesCourseIdTopicsTopicIdRoute
 }
@@ -283,6 +303,7 @@ const CoursesCourseIdRouteRouteChildren: CoursesCourseIdRouteRouteChildren = {
   CoursesCourseIdImportRoute: CoursesCourseIdImportRoute,
   CoursesCourseIdNotesRoute: CoursesCourseIdNotesRoute,
   CoursesCourseIdOldExamsRoute: CoursesCourseIdOldExamsRoute,
+  CoursesCourseIdPinnedRoute: CoursesCourseIdPinnedRoute,
   CoursesCourseIdIndexRoute: CoursesCourseIdIndexRoute,
   CoursesCourseIdTopicsTopicIdRoute: CoursesCourseIdTopicsTopicIdRoute,
 }

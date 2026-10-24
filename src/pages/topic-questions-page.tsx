@@ -10,7 +10,6 @@ import {
   Plus,
   Search,
   SearchX,
-  Star,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,13 +22,7 @@ import { Loading } from "@/components/loading";
 import { QuestionDialog } from "@/features/questions/question-dialog";
 import { getStudyEligibility } from "@/features/study/eligibility";
 import { ModePicker } from "@/features/study/mode-picker";
-import {
-  addQuestions,
-  deleteQuestion,
-  toggleFavorite,
-  updateQuestion,
-  useAppState,
-} from "@/lib/data/store";
+import { addQuestions, deleteQuestion, updateQuestion, useAppState } from "@/lib/data/store";
 import { attemptsByQuestion, computeProgress, isMastered, pct } from "@/lib/data/progress";
 import type { Question, StudyMode } from "@/lib/data/types";
 
@@ -45,7 +38,6 @@ export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; to
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState<Question | null>(null);
   const [mode, setMode] = useState<StudyMode>("mc");
-  const [unfavoriting, setUnfavoriting] = useState<Question | null>(null);
 
   const byQ = useMemo(() => attemptsByQuestion(s?.attempts ?? []), [s]);
   const qs = useMemo(() => s?.questions.filter((q) => q.topicId === topicId) ?? [], [s, topicId]);
@@ -220,19 +212,6 @@ export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; to
                         <Button
                           variant="ghost"
                           size="icon"
-                          aria-label={q.favorite ? "Remove from favourites" : "Add to favourites"}
-                          onClick={() =>
-                            q.favorite ? setUnfavoriting(q) : void toggleFavorite(q.id, true)
-                          }
-                        >
-                          <Star
-                            className={q.favorite ? "text-warning" : "text-muted-foreground"}
-                            fill={q.favorite ? "currentColor" : "none"}
-                          />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
                           aria-label="Edit question"
                           onClick={() => setEditing(q)}
                         >
@@ -298,16 +277,6 @@ export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; to
         onConfirm={async () => {
           await deleteQuestion(deleting!.id);
           setDeleting(null);
-        }}
-      />
-      <ConfirmDialog
-        open={!!unfavoriting}
-        onOpenChange={(open) => !open && setUnfavoriting(null)}
-        title="Remove from favourites?"
-        description={unfavoriting?.text}
-        onConfirm={async () => {
-          await toggleFavorite(unfavoriting!.id, false);
-          setUnfavoriting(null);
         }}
       />
     </AppShell>

@@ -20,7 +20,7 @@ export {
   importQuestions,
   normalizeQuestion,
   updateQuestion,
-  toggleFavorite,
+  togglePinned,
 } from "./client/questions";
 export {
   exportDataBackup,
@@ -32,4 +32,4 @@ export {
   openDataDirectory,
   useAppState,
 } from "./client/state";
-export { createTopic, deleteTopic, renameTopic } from "./client/topics";
+export { createTopic, deleteTopic, renameTopic, toggleTopicFavorite } from "./client/topics";

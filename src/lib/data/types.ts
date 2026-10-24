@@ -15,6 +15,7 @@ export interface Topic {
   courseId: ID;
   name: string;
   createdAt: number;
+  favorite?: boolean;
 }
 
 export interface Question {
@@ -29,7 +30,7 @@ export interface Question {
   /** Expected answer. For choice questions this lists all correct choices. */
   answer: string;
   explanation?: string;
-  favorite?: boolean;
+  pinned?: boolean;
   createdAt: number;
 }
 

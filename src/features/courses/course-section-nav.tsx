@@ -1,11 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, FileArchive, NotebookPen, Star } from "lucide-react";
+import { BookOpen, FileArchive, NotebookPen, Pin, Star } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
 interface CourseSectionNavProps {
   courseId: string;
-  active: "overview" | "notes" | "old-exams" | "favourites";
+  active: "overview" | "notes" | "old-exams" | "favourites" | "pinned";
 }
 
 const itemClass = (active: boolean) =>
@@ -34,6 +34,14 @@ export function CourseSectionNav({ courseId, active }: CourseSectionNavProps) {
       >
         <Star className="h-4 w-4" aria-hidden />
         Favourites
+      </Link>
+      <Link
+        to="/courses/$courseId/pinned"
+        params={{ courseId }}
+        className={itemClass(active === "pinned")}
+      >
+        <Pin className="h-4 w-4" aria-hidden />
+        Pinned questions
       </Link>
       <Link
         to="/courses/$courseId/notes"

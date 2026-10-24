@@ -20,6 +20,16 @@ export function renameTopic(id: ID, name: string): Promise<void> {
   }));
 }
 
+export function toggleTopicFavorite(id: ID, favorite: boolean): Promise<void> {
+  return transact((current) => ({
+    next: {
+      ...current,
+      topics: current.topics.map((topic) => (topic.id === id ? { ...topic, favorite } : topic)),
+    },
+    result: undefined,
+  }));
+}
+
 export function deleteTopic(id: ID): Promise<void> {
   return transact((current) => {
     const questionIds = new Set(

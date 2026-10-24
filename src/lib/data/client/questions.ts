@@ -55,12 +55,12 @@ export function updateQuestion(id: ID, input: QuestionInput): Promise<void> {
   }));
 }
 
-export function toggleFavorite(id: ID, favorite: boolean): Promise<void> {
+export function togglePinned(id: ID, pinned: boolean): Promise<void> {
   return transact((current) => ({
     next: {
       ...current,
       questions: current.questions.map((question) =>
-        question.id === id ? { ...question, favorite } : question,
+        question.id === id ? { ...question, pinned } : question,
       ),
     },
     result: undefined,

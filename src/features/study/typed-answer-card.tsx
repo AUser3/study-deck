@@ -1,9 +1,10 @@
-import { AlertCircle, ArrowRight, CheckCircle2, RotateCcw } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Pin, RotateCcw } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { answersMatch } from "@/lib/data/matching";
+import { togglePinned } from "@/lib/data/store";
 import { cn } from "@/lib/utils";
 
 import type { QuestionCardProps } from "./question-card-props";
@@ -33,7 +34,19 @@ export function TypedAnswerCard({ question, onResult, onNext, last }: QuestionCa
   });
 
   return (
-    <div className="surface mt-8 rounded-[2rem] p-5 sm:p-8">
+    <div className="surface relative mt-8 rounded-[2rem] p-5 sm:p-8">
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute right-4 top-4"
+        aria-label={question.pinned ? "Unpin question" : "Pin question"}
+        onClick={() => void togglePinned(question.id, !question.pinned)}
+      >
+        <Pin
+          className={question.pinned ? "text-primary" : "text-muted-foreground"}
+          fill={question.pinned ? "currentColor" : "none"}
+        />
+      </Button>
       <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
         <span className="h-2 w-2 rounded-full bg-primary shadow-[0_0_12px_currentColor]" />
         Recall from memory

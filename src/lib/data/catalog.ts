@@ -87,6 +87,7 @@ function parseTopic(value: unknown, courseId: string, file: string): Topic {
     courseId,
     name: stringValue(value.name, `${file}: topic.name`),
     createdAt: numberValue(value.createdAt, `${file}: topic.createdAt`),
+    favorite: value.favorite === true || undefined,
   };
 }
 
@@ -134,7 +135,7 @@ function parseQuestion(
     correctIndices,
     answer,
     explanation: optionalString(value.explanation, `${file}: question.explanation`),
-    favorite: value.favorite === true || undefined,
+    pinned: value.pinned === true || undefined,
     createdAt: numberValue(value.createdAt, `${file}: question.createdAt`),
   };
 }
