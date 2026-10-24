@@ -29,7 +29,7 @@ function downloadImportSample() {
 
 function buildJsonPrompt(source: string, topicName: string) {
   const topicInstruction = topicName.trim()
-    ? `Use \"${topicName.trim().replaceAll('"', '\\"')}\" as the default topic when the source does not clearly name one.`
+    ? `Use "${topicName.trim().replaceAll('"', '\\"')}" as the default topic when the source does not clearly name one.`
     : "If the course or topic cannot be identified, ask the user for the course name and topic before generating any JSON. Never invent or assume them.";
 
   return `You convert pasted exam material into a JSON question bank for Studydeck.
@@ -37,11 +37,11 @@ function buildJsonPrompt(source: string, topicName: string) {
 Return ONLY valid JSON. Do not use Markdown fences, commentary, or trailing commas.
 Return a JSON array where every object has exactly these fields:
 {
-  \"topic\": \"Topic name\",
-  \"question\": \"The complete question text\",
-  \"options\": [\"Option 1\", \"Option 2\"],
-  \"answer\": [\"The exact text of every correct option\"],
-  \"explanation\": \"A concise explanation, if one is supported by the source\"
+  "topic": "Topic name",
+  "question": "The complete question text",
+  "options": ["Option 1", "Option 2"],
+  "answer": ["The exact text of every correct option"],
+  "explanation": "A concise explanation, if one is supported by the source"
 }
 
 Rules:
@@ -64,13 +64,10 @@ ${source.trim() || "[Paste the exam material here]"}
 export function ImportSource({ draft, topics, onChange }: ImportSourceProps) {
   const [promptSource, setPromptSource] = useState("");
   const selectClassName = "h-9 w-full rounded-md border border-input bg-card px-3 text-sm";
-  const generatedPrompt = useMemo(
-    () => {
-      const selectedTopic = topics.find((topic) => topic.id === draft.topicId)?.name;
-      return buildJsonPrompt(promptSource, selectedTopic ?? draft.newTopicName);
-    },
-    [promptSource, draft.newTopicName, draft.topicId, topics],
-  );
+  const generatedPrompt = useMemo(() => {
+    const selectedTopic = topics.find((topic) => topic.id === draft.topicId)?.name;
+    return buildJsonPrompt(promptSource, selectedTopic ?? draft.newTopicName);
+  }, [promptSource, draft.newTopicName, draft.topicId, topics]);
 
   const onFile = async (file?: File) => {
     if (!file) return;
