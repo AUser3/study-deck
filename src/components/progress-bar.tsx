@@ -24,10 +24,14 @@ export function ProgressBar({
       aria-valuenow={Math.round(percentage)}
       aria-valuemin={0}
       aria-valuemax={100}
-      className="h-1.5 w-full overflow-hidden rounded-full bg-muted"
+      className="h-2 w-full overflow-hidden rounded-full bg-muted/80 ring-1 ring-border/50"
     >
       <div
-        className={cn("h-full rounded-full transition-all", TONE_CLASS[tone])}
+        className={cn(
+          "h-full rounded-full transition-all duration-700 ease-out",
+          TONE_CLASS[tone],
+          percentage > 0 && "shadow-[0_0_12px_currentColor]",
+        )}
         style={{ width: `${percentage}%` }}
       />
     </div>

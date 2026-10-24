@@ -25,9 +25,12 @@ export function SessionSummary({ results, questions, courseId, onRestart }: Sess
     .filter((question): question is Question => Boolean(question));
 
   return (
-    <div className="mt-8 rounded-2xl border border-border bg-card p-8 shadow-card">
-      <h1 className="text-3xl font-semibold">Session complete</h1>
-      <dl className="mt-6 grid grid-cols-3 gap-4 text-center">
+    <div className="mesh-gradient shimmer mt-8 rounded-[2rem] border border-white/70 p-6 shadow-card sm:p-8">
+      <div className="relative">
+        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-primary">Nice work</p>
+        <h1 className="mt-2 text-3xl font-semibold">Session complete</h1>
+      </div>
+      <dl className="relative mt-6 grid grid-cols-3 gap-3 text-center">
         <SummaryStat label="Reviewed" value={results.length} />
         <SummaryStat label="Correct" value={correctCount} tone="success" />
         <SummaryStat label="Need review" value={reviewQuestions.length} tone="warning" />
@@ -45,7 +48,7 @@ export function SessionSummary({ results, questions, courseId, onRestart }: Sess
           </ul>
         </div>
       )}
-      <div className="mt-8 flex flex-wrap gap-2">
+      <div className="relative mt-8 flex flex-wrap gap-2">
         <Button onClick={onRestart}>
           <RotateCcw className="h-4 w-4" /> Study again
         </Button>
