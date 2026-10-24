@@ -1,4 +1,5 @@
-import { Copy, Download, FileJson, FileText, Upload } from "lucide-react";
+import { Copy, Download, FileJson, FileText, Sparkles, Upload } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -26,8 +27,50 @@ function downloadImportSample() {
   URL.revokeObjectURL(anchor.href);
 }
 
+function buildJsonPrompt(source: string, topicName: string) {
+  const topicInstruction = topicName.trim()
+    ? `Use \"${topicName.trim().replaceAll('"', '\\"')}\" as the default topic when the source does not clearly name one.`
+    : "If the course or topic cannot be identified, ask the user for the course name and topic before generating any JSON. Never invent or assume them.";
+
+  return `You convert pasted exam material into a JSON question bank for Studydeck.
+
+Return ONLY valid JSON. Do not use Markdown fences, commentary, or trailing commas.
+Return a JSON array where every object has exactly these fields:
+{
+  \"topic\": \"Topic name\",
+  \"question\": \"The complete question text\",
+  \"options\": [\"Option 1\", \"Option 2\"],
+  \"answer\": [\"The exact text of every correct option\"],
+  \"explanation\": \"A concise explanation, if one is supported by the source\"
+}
+
+Rules:
+- Preserve every question; never invent, combine, or silently omit questions unless the user explicitly asks you to transform, combine, or remove content.
+- Preserve the original question wording and option text exactly. Preserve the original option order exactly.
+- Use an empty options array for typed-answer questions.
+- The answer field is an array for multiple-choice questions and must contain the exact option text, not letters or indices.
+- Copy the marked correct answer from the source. Do not guess when the source is ambiguous; add a short, useful explanation stating what is unclear.
+- Remove grading noise such as points, result labels, and repeated “Answer” headings.
+- If any required information is missing or ambiguous—including the course, topic, question boundary, answer choices, or correct answer—ask the user a concise clarification question before generating JSON.
+- Ask for all missing details at once. Do not generate partial JSON, placeholder values, invented topics, or guessed answers.
+- ${topicInstruction}
+
+Source material:
+---
+${source.trim() || "[Paste the exam material here]"}
+---`;
+}
+
 export function ImportSource({ draft, topics, onChange }: ImportSourceProps) {
+  const [promptSource, setPromptSource] = useState("");
   const selectClassName = "h-9 w-full rounded-md border border-input bg-card px-3 text-sm";
+  const generatedPrompt = useMemo(
+    () => {
+      const selectedTopic = topics.find((topic) => topic.id === draft.topicId)?.name;
+      return buildJsonPrompt(promptSource, selectedTopic ?? draft.newTopicName);
+    },
+    [promptSource, draft.newTopicName, draft.topicId, topics],
+  );
 
   const onFile = async (file?: File) => {
     if (!file) return;
@@ -76,6 +119,9 @@ export function ImportSource({ draft, topics, onChange }: ImportSourceProps) {
           </TabsTrigger>
           <TabsTrigger value="json">
             <FileJson className="h-4 w-4" /> JSON file
+          </TabsTrigger>
+          <TabsTrigger value="ai-prompt">
+            <Sparkles className="h-4 w-4" /> AI prompt
           </TabsTrigger>
         </TabsList>
         <TabsContent value="text" className="space-y-3">
@@ -151,6 +197,60 @@ export function ImportSource({ draft, topics, onChange }: ImportSourceProps) {
           <Button size="sm" variant="outline" onClick={downloadImportSample}>
             <Download className="h-4 w-4" /> Download sample JSON
           </Button>
+        </TabsContent>
+        <TabsContent value="ai-prompt" className="space-y-3">
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm">
+            <p className="font-medium">Turn messy exam text into importable JSON</p>
+            <p className="mt-1 text-muted-foreground">
+              Paste the exam or quiz results below. The generated prompt tells an AI exactly which
+              JSON format Studydeck accepts and protects the original answer choices.
+            </p>
+          </div>
+          <Textarea
+            value={promptSource}
+            onChange={(event) => setPromptSource(event.target.value)}
+            rows={12}
+            className="font-mono text-xs"
+            placeholder="Paste questions, answer choices, and correct answers here…"
+            aria-label="Exam material for AI prompt"
+          />
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(generatedPrompt);
+                toast.success("AI prompt copied");
+              }}
+            >
+              <Copy className="h-4 w-4" /> Copy prompt
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const blob = new Blob([generatedPrompt], { type: "text/plain" });
+                const anchor = document.createElement("a");
+                anchor.href = URL.createObjectURL(blob);
+                anchor.download = "studydeck-json-prompt.txt";
+                anchor.click();
+                URL.revokeObjectURL(anchor.href);
+              }}
+            >
+              <Download className="h-4 w-4" /> Download prompt
+            </Button>
+          </div>
+          <div>
+            <Label htmlFor="generated-json-prompt">Generated prompt</Label>
+            <Textarea
+              id="generated-json-prompt"
+              value={generatedPrompt}
+              readOnly
+              rows={18}
+              className="mt-1.5 font-mono text-xs"
+              aria-label="Generated JSON prompt"
+            />
+          </div>
         </TabsContent>
       </Tabs>
     </section>
