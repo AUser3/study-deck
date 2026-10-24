@@ -1,17 +1,22 @@
 import { Link } from "@tanstack/react-router";
-import { BookOpen, Pin, X } from "lucide-react";
+import { BookOpen, Pencil, Pin, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { EmptyState } from "@/components/empty-state";
 import { Loading } from "@/components/loading";
 import { Button } from "@/components/ui/button";
 import { CourseSectionNav } from "@/features/courses/course-section-nav";
-import { togglePinned, useAppState } from "@/lib/data/store";
+import { QuestionDialog } from "@/features/questions/question-dialog";
+import { togglePinned, updateQuestion, useAppState } from "@/lib/data/store";
+import type { Question } from "@/lib/data/types";
 
 export function CoursePinnedPage({ courseId }: { courseId: string }) {
   const state = useAppState();
   const [busy, setBusy] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Question | null>(null);
+  const [unpinning, setUnpinning] = useState<Question | null>(null);
   const course = state?.courses.find((item) => item.id === courseId);
   const pinned = useMemo(
     () =>
@@ -69,18 +74,47 @@ export function CoursePinnedPage({ courseId }: { courseId: string }) {
                 size="icon"
                 disabled={busy === question.id}
                 aria-label="Unpin question"
-                onClick={async () => {
-                  setBusy(question.id);
-                  await togglePinned(question.id, false);
-                  setBusy(null);
-                }}
+                onClick={() => setUnpinning(question)}
               >
                 <X className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Edit question"
+                onClick={() => setEditing(question)}
+              >
+                <Pencil className="h-4 w-4" />
               </Button>
             </li>
           ))}
         </ul>
       )}
+      <QuestionDialog
+        open={!!editing}
+        onOpenChange={(open) => !open && setEditing(null)}
+        courses={state.courses}
+        topics={state.topics}
+        initial={editing ?? undefined}
+        defaultCourseId={courseId}
+        defaultTopicId={editing?.topicId ?? ""}
+        onSubmit={async (next) => {
+          await updateQuestion(editing!.id, next);
+          setEditing(null);
+        }}
+      />
+      <ConfirmDialog
+        open={!!unpinning}
+        onOpenChange={(open) => !open && setUnpinning(null)}
+        title="Unpin this question?"
+        description={unpinning?.text}
+        onConfirm={async () => {
+          setBusy(unpinning!.id);
+          await togglePinned(unpinning!.id, false);
+          setBusy(null);
+          setUnpinning(null);
+        }}
+      />
     </AppShell>
   );
 }

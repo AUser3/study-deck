@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { BookOpen, Star, X } from "lucide-react";
+import { BookOpen, Pencil, Star, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import { AppShell } from "@/components/app-shell";
@@ -53,8 +53,8 @@ export function CourseFavouritesPage({ courseId }: { courseId: string }) {
 
       {favourites.length === 0 ? (
         <div className="mt-8">
-          <EmptyState icon={<Star className="h-6 w-6" />} title="No favourite questions yet">
-            Click the star beside a question to save it here for later review.
+          <EmptyState icon={<Star className="h-6 w-6" />} title="No favourite topics yet">
+            Click the star beside a topic on the course overview to save it here.
           </EmptyState>
         </div>
       ) : (
@@ -65,9 +65,12 @@ export function CourseFavouritesPage({ courseId }: { courseId: string }) {
               {favourites.length === 1 ? "topic" : "topics"}
             </p>
           </div>
-          <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card shadow-card">
+          <ul className="grid gap-3">
             {favourites.map((topic) => (
-              <li key={topic.id} className="flex items-start gap-3 px-4 py-4">
+              <li
+                key={topic.id}
+                className="surface flex items-center gap-4 overflow-hidden rounded-2xl border p-4 transition hover:-translate-y-0.5 hover:border-primary/30"
+              >
                 <Star
                   className="mt-0.5 h-5 w-5 shrink-0 text-warning"
                   fill="currentColor"
@@ -75,13 +78,24 @@ export function CourseFavouritesPage({ courseId }: { courseId: string }) {
                 />
                 <div className="min-w-0 flex-1">
                   <Link
-                    className="font-medium hover:underline"
+                    className="font-medium hover:text-primary hover:underline"
                     to="/courses/$courseId/topics/$topicId"
                     params={{ courseId, topicId: topic.id }}
                   >
                     {topic.name}
                   </Link>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Favourite topic · open to view and manage questions
+                  </p>
                 </div>
+                <Button variant="outline" size="sm" asChild>
+                  <Link
+                    to="/courses/$courseId/topics/$topicId"
+                    params={{ courseId, topicId: topic.id }}
+                  >
+                    <Pencil className="h-4 w-4" /> View questions
+                  </Link>
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"

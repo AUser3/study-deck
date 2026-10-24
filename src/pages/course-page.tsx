@@ -5,6 +5,7 @@ import {
   FileUp,
   FolderPlus,
   Layers,
+  MoreHorizontal,
   Pencil,
   Play,
   Plus,
@@ -13,6 +14,13 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AppShell } from "@/components/app-shell";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -254,22 +262,35 @@ export function CoursePage({ courseId }: { courseId: string }) {
                     >
                       <Plus className="h-4 w-4" /> Add question
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Rename ${t.name}`}
-                      onClick={() => setRenaming(t)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Delete ${t.name}`}
-                      onClick={() => setDeleting(t)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label={`Actions for ${t.name}`}>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => setRenaming(t)}>
+                          <Pencil className="h-4 w-4" /> Change topic name
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            navigate({
+                              to: "/courses/$courseId/topics/$topicId",
+                              params: { courseId, topicId: t.id },
+                            })
+                          }
+                        >
+                          <Layers className="h-4 w-4" /> View questions
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onSelect={() => setDeleting(t)}
+                        >
+                          <Trash2 className="h-4 w-4" /> Delete topic
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </li>
                 );
               })}
