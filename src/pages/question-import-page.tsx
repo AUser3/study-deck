@@ -26,7 +26,15 @@ export function QuestionImportPage({ courseId, initialTopicId }: QuestionImportP
     () => state?.topics.filter((topic) => topic.courseId === courseId) ?? [],
     [state, courseId],
   );
-  const result = useMemo(() => parseImportDraft(draft, topics), [draft, topics]);
+  const result = useMemo(
+    () =>
+      parseImportDraft(
+        draft,
+        topics,
+        state?.questions.filter((q) => q.courseId === courseId),
+      ),
+    [courseId, draft, state?.questions, topics],
+  );
 
   if (!state) {
     return (
@@ -53,10 +61,10 @@ export function QuestionImportPage({ courseId, initialTopicId }: QuestionImportP
     );
   }
 
-  const doImport = async () => {
+  const doImport = async (items: typeof result.items) => {
     const { questions, created } = await importQuestions(
       courseId,
-      result.items.map((item) => ({
+      items.map((item) => ({
         topicName: item.topicName,
         text: item.text,
         choices: item.choices,
@@ -94,6 +102,7 @@ export function QuestionImportPage({ courseId, initialTopicId }: QuestionImportP
         <ImportPreview
           courseName={course.name}
           items={result.items}
+          duplicateIndices={result.duplicateIndices}
           error={result.error}
           existingTopics={topics}
           onImport={doImport}

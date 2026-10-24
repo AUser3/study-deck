@@ -37,11 +37,14 @@ export function CoursePage({ courseId }: { courseId: string }) {
   const [renaming, setRenaming] = useState<Topic | null>(null);
   const [deleting, setDeleting] = useState<Topic | null>(null);
   const [editCourse, setEditCourse] = useState(false);
-  const [addingQ, setAddingQ] = useState(false);
+  const [addingQTopic, setAddingQTopic] = useState<Topic | null>(null);
 
   const course = s?.courses.find((c) => c.id === courseId);
   const topics = useMemo(
-    () => s?.topics.filter((t) => t.courseId === courseId) ?? [],
+    () =>
+      [...(s?.topics.filter((t) => t.courseId === courseId) ?? [])].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+      ),
     [s, courseId],
   );
   const byQ = useMemo(() => attemptsByQuestion(s?.attempts ?? []), [s]);
@@ -115,9 +118,6 @@ export function CoursePage({ courseId }: { courseId: string }) {
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" onClick={() => setNewTopic(true)}>
             <FolderPlus className="h-4 w-4" /> Create topic
-          </Button>
-          <Button variant="outline" disabled={!topics.length} onClick={() => setAddingQ(true)}>
-            <Plus className="h-4 w-4" /> Add question
           </Button>
           <Button variant="outline" asChild>
             <Link to="/courses/$courseId/import" params={{ courseId }}>
@@ -217,6 +217,14 @@ export function CoursePage({ courseId }: { courseId: string }) {
                         />
                       </div>
                     </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAddingQTopic(t)}
+                      aria-label={`Add question to ${t.name}`}
+                    >
+                      <Plus className="h-4 w-4" /> Add question
+                    </Button>
                     <Button
                       variant="ghost"
                       size="icon"
@@ -331,15 +339,15 @@ export function CoursePage({ courseId }: { courseId: string }) {
         }}
       />
       <QuestionDialog
-        open={addingQ}
-        onOpenChange={setAddingQ}
+        open={!!addingQTopic}
+        onOpenChange={(open) => !open && setAddingQTopic(null)}
         courses={s.courses}
         topics={s.topics}
         defaultCourseId={courseId}
-        defaultTopicId={topics[0]?.id ?? ""}
+        defaultTopicId={addingQTopic?.id ?? ""}
         onSubmit={async (q) => {
           await addQuestions([q]);
-          setAddingQ(false);
+          setAddingQTopic(null);
           toast("Question added");
         }}
       />

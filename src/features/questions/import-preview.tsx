@@ -1,4 +1,4 @@
-import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Copy } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -11,14 +11,16 @@ const PREVIEW_PAGE_SIZE = 40;
 interface ImportPreviewProps {
   courseName: string;
   items: ParsedQuestion[];
+  duplicateIndices: number[];
   error?: string;
   existingTopics: Topic[];
-  onImport: () => void | Promise<void>;
+  onImport: (items: ParsedQuestion[]) => void | Promise<void>;
 }
 
 export function ImportPreview({
   courseName,
   items,
+  duplicateIndices,
   error,
   existingTopics,
   onImport,
@@ -27,10 +29,16 @@ export function ImportPreview({
   const [onlyErrors, setOnlyErrors] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importError, setImportError] = useState("");
+  const [includeDuplicates, setIncludeDuplicates] = useState(false);
 
   useEffect(() => setLimit(PREVIEW_PAGE_SIZE), [items]);
 
   const invalidItems = useMemo(() => items.filter((item) => item.errors.length > 0), [items]);
+  const duplicateSet = useMemo(() => new Set(duplicateIndices), [duplicateIndices]);
+  const duplicateCount = duplicateIndices.length;
+  const importableItems = items.filter(
+    (item) => includeDuplicates || !duplicateSet.has(item.index),
+  );
   const existingNames = new Set(existingTopics.map((topic) => topic.name.toLowerCase()));
   const newTopics = [
     ...new Set(
@@ -50,7 +58,7 @@ export function ImportPreview({
 
   const filteredItems = onlyErrors ? invalidItems : items;
   const shownItems = filteredItems.slice(0, limit);
-  const canImport = items.length > 0 && invalidItems.length === 0 && !error;
+  const canImport = importableItems.length > 0 && invalidItems.length === 0 && !error;
 
   return (
     <section aria-label="Import preview" className="space-y-4">
@@ -118,10 +126,35 @@ export function ImportPreview({
             </button>
           </div>
         )}
+        {duplicateCount > 0 && (
+          <div className="mt-3 flex items-start gap-2 rounded-md bg-warning-soft p-2.5 text-xs">
+            <Copy className="h-4 w-4 shrink-0 text-warning" />
+            <span>
+              {duplicateCount} {duplicateCount === 1 ? "question is" : "questions are"} already in
+              this course and will be skipped by default.
+            </span>
+          </div>
+        )}
         {importError && (
           <p role="alert" className="mt-3 rounded-md bg-danger-soft p-2.5 text-sm text-destructive">
             {importError}
           </p>
+        )}
+        {duplicateCount > 0 && (
+          <label className="mt-3 flex cursor-pointer items-start gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={includeDuplicates}
+              onChange={(event) => setIncludeDuplicates(event.target.checked)}
+              className="mt-0.5"
+            />
+            <span>
+              Import duplicates anyway
+              <span className="block text-xs text-muted-foreground">
+                Leave this off to keep only new questions.
+              </span>
+            </span>
+          </label>
         )}
         <Button
           className="mt-4 w-full"
@@ -131,7 +164,7 @@ export function ImportPreview({
             setImporting(true);
             setImportError("");
             try {
-              await onImport();
+              await onImport(importableItems);
             } catch (cause) {
               setImportError(
                 cause instanceof Error ? cause.message : "The questions could not be imported.",
@@ -144,7 +177,7 @@ export function ImportPreview({
           {importing
             ? "Saving…"
             : canImport
-              ? `Import ${items.length} questions`
+              ? `Import ${importableItems.length} questions`
               : "Fix errors to import"}
         </Button>
       </div>
@@ -156,7 +189,11 @@ export function ImportPreview({
               key={item.index}
               className={cn(
                 "rounded-lg border bg-card p-3 text-sm",
-                item.errors.length ? "border-destructive" : "border-border",
+                item.errors.length
+                  ? "border-destructive"
+                  : duplicateSet.has(item.index)
+                    ? "border-warning bg-warning-soft/30"
+                    : "border-border",
               )}
             >
               <div className="flex items-start gap-2">
@@ -165,6 +202,8 @@ export function ImportPreview({
                     className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
                     aria-label="Has errors"
                   />
+                ) : duplicateSet.has(item.index) ? (
+                  <Copy className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-label="Duplicate" />
                 ) : (
                   <CheckCircle2
                     className="mt-0.5 h-4 w-4 shrink-0 text-success"
@@ -203,6 +242,9 @@ export function ImportPreview({
                       ⚠ {itemError}
                     </p>
                   ))}
+                  {duplicateSet.has(item.index) && (
+                    <p className="mt-1 text-warning">Already exists in this course.</p>
+                  )}
                 </div>
               </div>
             </li>

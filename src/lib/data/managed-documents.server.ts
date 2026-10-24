@@ -107,7 +107,16 @@ export class ManagedDocumentStore {
 
   async remove(document: ManagedDocument): Promise<void> {
     validateDocument(document);
-    await rm(path.join(this.documentsDirectory, document.storageName), { force: true });
+    const backupDirectory = path.join(this.dataDirectory, "backup", "documents");
+    await mkdir(backupDirectory, { recursive: true });
+    try {
+      await rename(
+        path.join(this.documentsDirectory, document.storageName),
+        path.join(backupDirectory, `${Date.now()}-${randomUUID()}-${document.storageName}`),
+      );
+    } catch (error) {
+      if (!isMissingFileError(error)) throw error;
+    }
   }
 
   private async atomicWrite(storageName: string, contents: Buffer): Promise<void> {
@@ -123,4 +132,8 @@ export class ManagedDocumentStore {
       throw error;
     }
   }
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }

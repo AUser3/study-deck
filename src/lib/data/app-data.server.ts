@@ -149,7 +149,7 @@ export class AppDataRepository {
     const nextIds = new Set(nextEntries.map((entry) => entry.id));
     for (const entry of oldEntries) {
       if (!nextIds.has(entry.id)) {
-        await rm(path.join(this.directory, entry.file), { force: true });
+        await this.archiveFile(entry.file, "courses");
       }
     }
     const retainedDocuments = new Set(next.oldExams.map((exam) => exam.document.storageName));
@@ -200,9 +200,19 @@ export class AppDataRepository {
 
   private async readState(): Promise<AppState> {
     const manifest = parseManifest(await this.read(MANIFEST_FILE));
-    const parts = await Promise.all(
-      manifest.courses.map(async (entry) => parseCourseFile(await this.read(entry.file), entry)),
-    );
+    const entries: CourseFileEntry[] = [];
+    const parts: Catalog[] = [];
+    for (const entry of manifest.courses) {
+      try {
+        parts.push(parseCourseFile(await this.read(entry.file), entry));
+        entries.push(entry);
+      } catch (error) {
+        if (!isMissingFileError(error)) throw error;
+      }
+    }
+    if (entries.length !== manifest.courses.length) {
+      await this.atomicWrite(MANIFEST_FILE, serializeManifest(entries));
+    }
     const catalog = combineCatalogs(parts);
     const attempts = parseProgress(await this.read(PROGRESS_FILE));
     const questionIds = new Set(catalog.questions.map((question) => question.id));
@@ -224,6 +234,25 @@ export class AppDataRepository {
       throw error;
     }
   }
+
+  private async archiveFile(file: string, category: string): Promise<void> {
+    const source = path.join(this.directory, file);
+    const targetDirectory = path.join(this.directory, "backup", category);
+    await mkdir(targetDirectory, { recursive: true });
+    const target = path.join(
+      targetDirectory,
+      `${Date.now()}-${randomUUID()}-${path.basename(file)}`,
+    );
+    try {
+      await rename(source, target);
+    } catch (error) {
+      if (!isMissingFileError(error)) throw error;
+    }
+  }
+}
+
+function isMissingFileError(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
 
 export const appDataRepository = new AppDataRepository(resolveAppDataDirectory());
