@@ -1,6 +1,6 @@
 // @vitest-environment node
 
-import { mkdtemp, readFile, stat } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, stat, unlink } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -97,6 +97,30 @@ describe("application-data repository", () => {
     await data.save(empty);
     expect(await data.load()).toEqual(empty);
     await expect(readFile(coursePath, "utf8")).rejects.toMatchObject({ code: "ENOENT" });
+    const archivedCourses = await readdir(path.join(data.directory, "backup", "courses"));
+    expect(archivedCourses).toHaveLength(1);
+  });
+
+  it("repairs a manifest when a course file was removed outside the app", async () => {
+    const data = await repository();
+    await data.save({
+      version: APP_STATE_VERSION,
+      courses: [{ id: "course-1", name: "Missing file", createdAt: 1 }],
+      topics: [],
+      questions: [],
+      attempts: [],
+      notes: [],
+      oldExams: [],
+    });
+    const manifest = parseManifest(
+      await readFile(path.join(data.directory, "manifest.json"), "utf8"),
+    );
+    await unlink(path.join(data.directory, manifest.courses[0].file));
+
+    await expect(data.load()).resolves.toMatchObject({ courses: [], topics: [], questions: [] });
+    expect(
+      parseManifest(await readFile(path.join(data.directory, "manifest.json"), "utf8")),
+    ).toEqual({ schemaVersion: 1, courses: [] });
   });
 
   it("rejects attempts that point at missing questions", async () => {
