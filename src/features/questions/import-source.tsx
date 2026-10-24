@@ -53,6 +53,8 @@ Rules:
 - Remove grading noise such as points, result labels, and repeated “Answer” headings.
 - If any required information is missing or ambiguous—including the course, topic, question boundary, answer choices, or correct answer—ask the user a concise clarification question before generating JSON.
 - Ask for all missing details at once. Do not generate partial JSON, placeholder values, invented topics, or guessed answers.
+- Inside JSON string values, encode double quotes as \\u0022 and backslashes as \\u005c.
+- Validate the complete generated output with a JSON parser before returning it. Return nothing until it parses successfully.
 - ${topicInstruction}
 
 Source material:
