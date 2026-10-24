@@ -47,7 +47,13 @@ import { attemptsByQuestion, computeProgress, pct } from "@/lib/data/progress";
 import type { StudyMode, Topic } from "@/lib/data/types";
 
 /** Topics, progress, and course actions for one course. */
-export function CoursePage({ courseId }: { courseId: string }) {
+export function CoursePage({
+  courseId,
+  favoriteOnly = false,
+}: {
+  courseId: string;
+  favoriteOnly?: boolean;
+}) {
   const s = useAppState();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -62,10 +68,11 @@ export function CoursePage({ courseId }: { courseId: string }) {
   const course = s?.courses.find((c) => c.id === courseId);
   const topics = useMemo(
     () =>
-      [...(s?.topics.filter((t) => t.courseId === courseId) ?? [])].sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-      ),
-    [s, courseId],
+      [
+        ...(s?.topics.filter((t) => t.courseId === courseId && (!favoriteOnly || t.favorite)) ??
+          []),
+      ].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" })),
+    [s, courseId, favoriteOnly],
   );
   const byQ = useMemo(() => attemptsByQuestion(s?.attempts ?? []), [s]);
 
@@ -146,13 +153,13 @@ export function CoursePage({ courseId }: { courseId: string }) {
           </Button>
         </div>
       </div>
-      <CourseSectionNav courseId={courseId} active="overview" />
+      <CourseSectionNav courseId={courseId} active={favoriteOnly ? "favourites" : "overview"} />
 
       {topics.length === 0 ? (
         <div className="mt-8">
           <EmptyState
             icon={<Layers className="h-6 w-6" />}
-            title="This course has no topics yet"
+            title={favoriteOnly ? "No favourite topics yet" : "This course has no topics yet"}
             actions={
               <>
                 <Button onClick={() => setNewTopic(true)}>
@@ -166,8 +173,9 @@ export function CoursePage({ courseId }: { courseId: string }) {
               </>
             }
           >
-            Topics group your questions. Create one manually, or import questions — topics named in
-            the import are created for you.
+            {favoriteOnly
+              ? "Click the star beside a topic on the course overview to save it here."
+              : "Topics group your questions. Create one manually, or import questions — topics named in the import are created for you."}
           </EmptyState>
         </div>
       ) : (
