@@ -55,6 +55,18 @@ export function updateQuestion(id: ID, input: QuestionInput): Promise<void> {
   }));
 }
 
+export function toggleFavorite(id: ID, favorite: boolean): Promise<void> {
+  return transact((current) => ({
+    next: {
+      ...current,
+      questions: current.questions.map((question) =>
+        question.id === id ? { ...question, favorite } : question,
+      ),
+    },
+    result: undefined,
+  }));
+}
+
 export function deleteQuestion(id: ID): Promise<void> {
   return transact((current) => ({
     next: {

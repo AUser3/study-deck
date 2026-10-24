@@ -20,6 +20,7 @@ export {
   importQuestions,
   normalizeQuestion,
   updateQuestion,
+  toggleFavorite,
 } from "./client/questions";
 export {
   exportDataBackup,

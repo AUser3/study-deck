@@ -29,6 +29,7 @@ export interface Question {
   /** Expected answer. For choice questions this lists all correct choices. */
   answer: string;
   explanation?: string;
+  favorite?: boolean;
   createdAt: number;
 }
 

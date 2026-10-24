@@ -134,6 +134,7 @@ function parseQuestion(
     correctIndices,
     answer,
     explanation: optionalString(value.explanation, `${file}: question.explanation`),
+    favorite: value.favorite === true || undefined,
     createdAt: numberValue(value.createdAt, `${file}: question.createdAt`),
   };
 }

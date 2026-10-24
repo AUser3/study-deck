@@ -16,6 +16,7 @@ import { Route as FaqRouteImport } from './routes/faq'
 import { Route as StudyRouteImport } from './routes/study'
 import { Route as CoursesCourseIdRouteRouteImport } from './routes/courses/$courseId/route'
 import { Route as CoursesCourseIdIndexRouteImport } from './routes/courses/$courseId/index'
+import { Route as CoursesCourseIdFavouritesRouteImport } from './routes/courses/$courseId/favourites'
 import { Route as CoursesCourseIdImportRouteImport } from './routes/courses/$courseId/import'
 import { Route as CoursesCourseIdNotesRouteImport } from './routes/courses/$courseId/notes'
 import { Route as CoursesCourseIdOldExamsRouteImport } from './routes/courses/$courseId/old-exams'
@@ -56,6 +57,12 @@ const CoursesCourseIdIndexRoute = CoursesCourseIdIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CoursesCourseIdRouteRoute,
 } as any)
+const CoursesCourseIdFavouritesRoute =
+  CoursesCourseIdFavouritesRouteImport.update({
+    id: '/favourites',
+    path: '/favourites',
+    getParentRoute: () => CoursesCourseIdRouteRoute,
+  } as any)
 const CoursesCourseIdImportRoute = CoursesCourseIdImportRouteImport.update({
   id: '/import',
   path: '/import',
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/faq': typeof FaqRoute
   '/study': typeof StudyRoute
   '/courses/$courseId': typeof CoursesCourseIdRouteRouteWithChildren
+  '/courses/$courseId/favourites': typeof CoursesCourseIdFavouritesRoute
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
   '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
   '/courses/$courseId/old-exams': typeof CoursesCourseIdOldExamsRoute
@@ -97,6 +105,7 @@ export interface FileRoutesByTo {
   '/contributing': typeof ContributingRoute
   '/faq': typeof FaqRoute
   '/study': typeof StudyRoute
+  '/courses/$courseId/favourites': typeof CoursesCourseIdFavouritesRoute
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
   '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
   '/courses/$courseId/old-exams': typeof CoursesCourseIdOldExamsRoute
@@ -111,6 +120,7 @@ export interface FileRoutesById {
   '/faq': typeof FaqRoute
   '/study': typeof StudyRoute
   '/courses/$courseId': typeof CoursesCourseIdRouteRouteWithChildren
+  '/courses/$courseId/favourites': typeof CoursesCourseIdFavouritesRoute
   '/courses/$courseId/import': typeof CoursesCourseIdImportRoute
   '/courses/$courseId/notes': typeof CoursesCourseIdNotesRoute
   '/courses/$courseId/old-exams': typeof CoursesCourseIdOldExamsRoute
@@ -126,6 +136,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/study'
     | '/courses/$courseId'
+    | '/courses/$courseId/favourites'
     | '/courses/$courseId/import'
     | '/courses/$courseId/notes'
     | '/courses/$courseId/old-exams'
@@ -138,6 +149,7 @@ export interface FileRouteTypes {
     | '/contributing'
     | '/faq'
     | '/study'
+    | '/courses/$courseId/favourites'
     | '/courses/$courseId/import'
     | '/courses/$courseId/notes'
     | '/courses/$courseId/old-exams'
@@ -151,6 +163,7 @@ export interface FileRouteTypes {
     | '/faq'
     | '/study'
     | '/courses/$courseId'
+    | '/courses/$courseId/favourites'
     | '/courses/$courseId/import'
     | '/courses/$courseId/notes'
     | '/courses/$courseId/old-exams'
@@ -218,6 +231,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CoursesCourseIdIndexRouteImport
       parentRoute: typeof CoursesCourseIdRouteRoute
     }
+    '/courses/$courseId/favourites': {
+      id: '/courses/$courseId/favourites'
+      path: '/favourites'
+      fullPath: '/courses/$courseId/favourites'
+      preLoaderRoute: typeof CoursesCourseIdFavouritesRouteImport
+      parentRoute: typeof CoursesCourseIdRouteRoute
+    }
     '/courses/$courseId/import': {
       id: '/courses/$courseId/import'
       path: '/import'
@@ -250,6 +270,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface CoursesCourseIdRouteRouteChildren {
+  CoursesCourseIdFavouritesRoute: typeof CoursesCourseIdFavouritesRoute
   CoursesCourseIdImportRoute: typeof CoursesCourseIdImportRoute
   CoursesCourseIdNotesRoute: typeof CoursesCourseIdNotesRoute
   CoursesCourseIdOldExamsRoute: typeof CoursesCourseIdOldExamsRoute
@@ -258,6 +279,7 @@ interface CoursesCourseIdRouteRouteChildren {
 }
 
 const CoursesCourseIdRouteRouteChildren: CoursesCourseIdRouteRouteChildren = {
+  CoursesCourseIdFavouritesRoute: CoursesCourseIdFavouritesRoute,
   CoursesCourseIdImportRoute: CoursesCourseIdImportRoute,
   CoursesCourseIdNotesRoute: CoursesCourseIdNotesRoute,
   CoursesCourseIdOldExamsRoute: CoursesCourseIdOldExamsRoute,
