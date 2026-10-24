@@ -14,6 +14,7 @@ export function TypedAnswerCard({ question, onResult, onNext, last }: QuestionCa
   const [value, setValue] = useState("");
   const [revealed, setRevealed] = useState(false);
   const [judged, setJudged] = useState<boolean | null>(null);
+  const [pinned, setPinned] = useState(question.pinned === true);
   const autoMatch = revealed && answersMatch(value, question.answer);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -39,14 +40,18 @@ export function TypedAnswerCard({ question, onResult, onNext, last }: QuestionCa
         variant="ghost"
         size="icon"
         className="absolute right-4 top-4"
-        aria-label={question.pinned ? "Unpin question" : "Pin question"}
-        aria-pressed={question.pinned}
-        onClick={() => void togglePinned(question.id, !question.pinned)}
+        aria-label={pinned ? "Unpin question" : "Pin question"}
+        aria-pressed={pinned}
+        onClick={() => {
+          const next = !pinned;
+          setPinned(next);
+          void togglePinned(question.id, next);
+        }}
       >
         <Pin
-          className={question.pinned ? "text-primary drop-shadow-sm" : "text-muted-foreground"}
-          fill={question.pinned ? "currentColor" : "none"}
-          strokeWidth={question.pinned ? 2.5 : 2}
+          className={pinned ? "text-primary drop-shadow-sm" : "text-muted-foreground"}
+          fill={pinned ? "currentColor" : "none"}
+          strokeWidth={pinned ? 2.5 : 2}
         />
       </Button>
       <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">

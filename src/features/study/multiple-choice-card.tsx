@@ -12,6 +12,7 @@ import { useStudyKeys } from "./use-study-keys";
 export function MultipleChoiceCard({ question, onResult, onNext, last }: QuestionCardProps) {
   const [selected, setSelected] = useState<Set<number>>(() => new Set());
   const [checked, setChecked] = useState(false);
+  const [pinned, setPinned] = useState(question.pinned === true);
   const correct = selectionsMatch(selected, question.correctIndices);
 
   const toggleChoice = (index: number) => {
@@ -54,14 +55,18 @@ export function MultipleChoiceCard({ question, onResult, onNext, last }: Questio
         variant="ghost"
         size="icon"
         className="absolute right-4 top-4"
-        aria-label={question.pinned ? "Unpin question" : "Pin question"}
-        aria-pressed={question.pinned}
-        onClick={() => void togglePinned(question.id, !question.pinned)}
+        aria-label={pinned ? "Unpin question" : "Pin question"}
+        aria-pressed={pinned}
+        onClick={() => {
+          const next = !pinned;
+          setPinned(next);
+          void togglePinned(question.id, next);
+        }}
       >
         <Pin
-          className={question.pinned ? "text-primary drop-shadow-sm" : "text-muted-foreground"}
-          fill={question.pinned ? "currentColor" : "none"}
-          strokeWidth={question.pinned ? 2.5 : 2}
+          className={pinned ? "text-primary drop-shadow-sm" : "text-muted-foreground"}
+          fill={pinned ? "currentColor" : "none"}
+          strokeWidth={pinned ? 2.5 : 2}
         />
       </Button>
       <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
