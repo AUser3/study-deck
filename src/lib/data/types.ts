@@ -32,6 +32,12 @@ export interface Question {
   createdAt: number;
 }
 
+export interface RecoveryQuestion {
+  id: ID;
+  deletedAt: number;
+  question: Question;
+}
+
 export type StudyMode = "mc" | "typed";
 
 export interface Attempt {

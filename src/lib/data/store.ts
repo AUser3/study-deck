@@ -25,6 +25,9 @@ export {
   exportDataBackup,
   getState,
   importDataBackup,
+  listRecoveryQuestions,
+  restoreRecoveryQuestions,
+  deleteRecoveryQuestions,
   openDataDirectory,
   useAppState,
 } from "./client/state";

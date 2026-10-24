@@ -1,7 +1,7 @@
 import "@tanstack/react-start/server-only";
 
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, rename, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import { resolveAppDataDirectory } from "./app-data-location.server";
@@ -25,10 +25,11 @@ import {
   type CourseFileEntry,
 } from "./catalog";
 import { APP_STATE_VERSION } from "./types";
-import type { AppState, ManagedDocument } from "./types";
+import type { AppState, ManagedDocument, RecoveryQuestion } from "./types";
 
 const MANIFEST_FILE = "manifest.json";
 const EMPTY_MANIFEST = serializeManifest([]);
+const RECOVERY_DIRECTORY = path.join("backup", "recovery", "questions");
 
 function slug(value: string): string {
   return (
@@ -120,6 +121,56 @@ export class AppDataRepository {
     return this.exclusive(() => this.documents.remove(document));
   }
 
+  async listRecoveryQuestions(): Promise<RecoveryQuestion[]> {
+    await mkdir(path.join(this.directory, RECOVERY_DIRECTORY), { recursive: true });
+    const names = await readdir(path.join(this.directory, RECOVERY_DIRECTORY));
+    const records = await Promise.all(
+      names
+        .filter((name) => /^[a-zA-Z0-9-]+\.json$/.test(name))
+        .map(
+          async (name) =>
+            JSON.parse(
+              await readFile(path.join(this.directory, RECOVERY_DIRECTORY, name), "utf8"),
+            ) as RecoveryQuestion,
+        ),
+    );
+    return records.sort((a, b) => b.deletedAt - a.deletedAt);
+  }
+
+  restoreRecoveryQuestions(ids: string[]): Promise<AppState> {
+    return this.exclusive(async () => {
+      await this.ensureBaseFiles();
+      const previous = await this.readState();
+      const records = await this.listRecoveryQuestions();
+      const selected = records.filter((record) => ids.includes(record.id));
+      const courseIds = new Set(previous.courses.map((course) => course.id));
+      const topicIds = new Set(previous.topics.map((topic) => topic.id));
+      const questionIds = new Set(previous.questions.map((question) => question.id));
+      const restorable = selected
+        .map((record) => record.question)
+        .filter(
+          (question) =>
+            courseIds.has(question.courseId) &&
+            topicIds.has(question.topicId) &&
+            !questionIds.has(question.id),
+        );
+      const next = { ...previous, questions: [...previous.questions, ...restorable] };
+      await this.writeState(next, previous);
+      await Promise.all(
+        selected
+          .filter((record) => restorable.some((question) => question.id === record.question.id))
+          .map((record) => this.removeRecoveryFile(record.id)),
+      );
+      return next;
+    });
+  }
+
+  deleteRecoveryQuestions(ids: string[]): Promise<void> {
+    return this.exclusive(async () => {
+      await Promise.all(ids.map((id) => this.removeRecoveryFile(id)));
+    });
+  }
+
   private async writeState(next: AppState, previous: AppState): Promise<void> {
     await Promise.all(next.oldExams.map((exam) => this.documents.verify(exam.document)));
     const manifest = parseManifest(await this.read(MANIFEST_FILE));
@@ -137,6 +188,13 @@ export class AppDataRepository {
       const after = serializeCourseFile(next, entry.id);
       if (before !== after) await this.atomicWrite(entry.file, after);
     }
+
+    const nextQuestionIds = new Set(next.questions.map((question) => question.id));
+    await Promise.all(
+      previous.questions
+        .filter((question) => !nextQuestionIds.has(question.id))
+        .map((question) => this.archiveQuestion(question)),
+    );
 
     const previousProgress = serializeProgress(previous.attempts);
     const nextProgress = serializeProgress(next.attempts);
@@ -248,6 +306,18 @@ export class AppDataRepository {
     } catch (error) {
       if (!isMissingFileError(error)) throw error;
     }
+  }
+
+  private async archiveQuestion(question: RecoveryQuestion["question"]): Promise<void> {
+    const directory = path.join(this.directory, RECOVERY_DIRECTORY);
+    await mkdir(directory, { recursive: true });
+    const record: RecoveryQuestion = { id: question.id, deletedAt: Date.now(), question };
+    await writeFile(path.join(directory, `${question.id}.json`), JSON.stringify(record, null, 2));
+  }
+
+  private async removeRecoveryFile(id: string): Promise<void> {
+    if (!/^[a-zA-Z0-9-]+$/.test(id)) return;
+    await rm(path.join(this.directory, RECOVERY_DIRECTORY, `${id}.json`), { force: true });
   }
 }
 
