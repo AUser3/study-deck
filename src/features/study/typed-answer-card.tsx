@@ -40,11 +40,13 @@ export function TypedAnswerCard({ question, onResult, onNext, last }: QuestionCa
         size="icon"
         className="absolute right-4 top-4"
         aria-label={question.pinned ? "Unpin question" : "Pin question"}
+        aria-pressed={question.pinned}
         onClick={() => void togglePinned(question.id, !question.pinned)}
       >
         <Pin
-          className={question.pinned ? "text-primary" : "text-muted-foreground"}
+          className={question.pinned ? "text-primary drop-shadow-sm" : "text-muted-foreground"}
           fill={question.pinned ? "currentColor" : "none"}
+          strokeWidth={question.pinned ? 2.5 : 2}
         />
       </Button>
       <div className="mb-6 flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">

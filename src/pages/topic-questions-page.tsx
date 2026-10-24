@@ -209,7 +209,13 @@ export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; to
                             {" · "}
                             {q.choices.length ? `${q.choices.length} choices` : "Typed answer only"}
                             {" · "}
-                            {list?.length ? `${list.length} attempts` : "Not studied"}
+                            {list?.length ? (
+                              <span className="text-destructive">
+                                {list.length} {list.length === 1 ? "attempt" : "attempts"}
+                              </span>
+                            ) : (
+                              "Not studied"
+                            )}
                           </p>
                         </div>
                         {isMastered(list) && (
@@ -221,6 +227,7 @@ export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; to
                           variant="ghost"
                           size="icon"
                           aria-label={q.pinned ? "Unpin question" : "Pin question"}
+                          aria-pressed={q.pinned}
                           onClick={() =>
                             q.pinned ? setUnpinning(q) : void togglePinned(q.id, true)
                           }
