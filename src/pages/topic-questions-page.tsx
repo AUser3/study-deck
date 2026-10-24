@@ -8,6 +8,7 @@ import {
   Pencil,
   Play,
   Plus,
+  Pin,
   Search,
   SearchX,
   Trash2,
@@ -22,7 +23,13 @@ import { Loading } from "@/components/loading";
 import { QuestionDialog } from "@/features/questions/question-dialog";
 import { getStudyEligibility } from "@/features/study/eligibility";
 import { ModePicker } from "@/features/study/mode-picker";
-import { addQuestions, deleteQuestion, updateQuestion, useAppState } from "@/lib/data/store";
+import {
+  addQuestions,
+  deleteQuestion,
+  togglePinned,
+  updateQuestion,
+  useAppState,
+} from "@/lib/data/store";
 import { attemptsByQuestion, computeProgress, isMastered, pct } from "@/lib/data/progress";
 import type { Question, StudyMode } from "@/lib/data/types";
 
@@ -38,6 +45,7 @@ export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; to
   const [adding, setAdding] = useState(false);
   const [deleting, setDeleting] = useState<Question | null>(null);
   const [mode, setMode] = useState<StudyMode>("mc");
+  const [unpinning, setUnpinning] = useState<Question | null>(null);
 
   const byQ = useMemo(() => attemptsByQuestion(s?.attempts ?? []), [s]);
   const qs = useMemo(() => s?.questions.filter((q) => q.topicId === topicId) ?? [], [s, topicId]);
@@ -201,7 +209,13 @@ export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; to
                             {" · "}
                             {q.choices.length ? `${q.choices.length} choices` : "Typed answer only"}
                             {" · "}
-                            {list?.length ? `${list.length} attempts` : "Not studied"}
+                            {list?.length ? (
+                              <span className="text-destructive">
+                                {list.length} {list.length === 1 ? "attempt" : "attempts"}
+                              </span>
+                            ) : (
+                              "Not studied"
+                            )}
                           </p>
                         </div>
                         {isMastered(list) && (
@@ -209,6 +223,20 @@ export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; to
                             <CheckCircle2 className="h-3.5 w-3.5" /> Mastered
                           </span>
                         )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={q.pinned ? "Unpin question" : "Pin question"}
+                          aria-pressed={q.pinned}
+                          onClick={() =>
+                            q.pinned ? setUnpinning(q) : void togglePinned(q.id, true)
+                          }
+                        >
+                          <Pin
+                            className={q.pinned ? "text-primary" : "text-muted-foreground"}
+                            fill={q.pinned ? "currentColor" : "none"}
+                          />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -277,6 +305,16 @@ export function TopicQuestionsPage({ courseId, topicId }: { courseId: string; to
         onConfirm={async () => {
           await deleteQuestion(deleting!.id);
           setDeleting(null);
+        }}
+      />
+      <ConfirmDialog
+        open={!!unpinning}
+        onOpenChange={(open) => !open && setUnpinning(null)}
+        title="Unpin this question?"
+        description={unpinning?.text}
+        onConfirm={async () => {
+          await togglePinned(unpinning!.id, false);
+          setUnpinning(null);
         }}
       />
     </AppShell>

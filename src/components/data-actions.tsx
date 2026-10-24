@@ -1,4 +1,12 @@
-import { ArchiveRestore, Database, Download, FolderOpen, LoaderCircle, Upload } from "lucide-react";
+import {
+  ArchiveRestore,
+  Database,
+  Download,
+  FolderOpen,
+  LoaderCircle,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -13,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,7 +29,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { exportDataBackup, importDataBackup, openDataDirectory } from "@/lib/data/store";
+import {
+  deleteRecoveryQuestions,
+  exportDataBackup,
+  importDataBackup,
+  listRecoveryQuestions,
+  openDataDirectory,
+  restoreRecoveryQuestions,
+} from "@/lib/data/store";
+import type { RecoveryQuestion } from "@/lib/data/types";
 
 interface PendingRestore {
   name: string;
@@ -44,6 +61,10 @@ export function DataActions() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [pendingRestore, setPendingRestore] = useState<PendingRestore | null>(null);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [recoveryItems, setRecoveryItems] = useState<RecoveryQuestion[]>([]);
+  const [selectedRecovery, setSelectedRecovery] = useState<Set<string>>(new Set());
+  const [recoveryBusy, setRecoveryBusy] = useState(false);
 
   const run = async (operation: () => Promise<void>, fallback: string) => {
     setBusy(true);
@@ -66,6 +87,28 @@ export function DataActions() {
       if (inputRef.current) inputRef.current.value = "";
     }
   };
+
+  const openRecovery = () => {
+    setRecoveryOpen(true);
+    setRecoveryBusy(true);
+    void listRecoveryQuestions()
+      .then((items) => {
+        setRecoveryItems(items);
+        setSelectedRecovery(new Set());
+      })
+      .catch((error) =>
+        toast.error(error instanceof Error ? error.message : "Recovery could not be loaded."),
+      )
+      .finally(() => setRecoveryBusy(false));
+  };
+
+  const toggleRecovery = (id: string) =>
+    setSelectedRecovery((current) => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   return (
     <>
@@ -115,6 +158,10 @@ export function DataActions() {
             <Upload aria-hidden />
             Restore backup
           </DropdownMenuItem>
+          <DropdownMenuItem onSelect={openRecovery}>
+            <ArchiveRestore aria-hidden />
+            Recover deleted questions
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -148,6 +195,98 @@ export function DataActions() {
             >
               Restore backup
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={recoveryOpen} onOpenChange={setRecoveryOpen}>
+        <AlertDialogContent className="max-w-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ArchiveRestore className="h-5 w-5" aria-hidden />
+              Recover deleted questions
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Select one or more questions to restore. The original course and topic must still
+              exist.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="max-h-80 space-y-2 overflow-y-auto py-2">
+            {recoveryBusy && <p className="text-sm text-muted-foreground">Loading recovery…</p>}
+            {!recoveryBusy && recoveryItems.length === 0 && (
+              <p className="text-sm text-muted-foreground">No deleted questions are available.</p>
+            )}
+            {recoveryItems.map((item) => (
+              <label
+                key={item.id}
+                className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 hover:bg-accent"
+              >
+                <Checkbox
+                  checked={selectedRecovery.has(item.id)}
+                  onCheckedChange={() => toggleRecovery(item.id)}
+                  aria-label={`Select ${item.question.text}`}
+                />
+                <span className="min-w-0 text-sm">
+                  <span className="block font-medium">{item.question.text}</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Deleted {new Date(item.deletedAt).toLocaleString()} ·{" "}
+                    {item.question.choices.length} choices
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <AlertDialogFooter>
+            <Button
+              variant="outline"
+              disabled={!selectedRecovery.size || recoveryBusy}
+              onClick={() => {
+                const ids = [...selectedRecovery];
+                setRecoveryBusy(true);
+                void deleteRecoveryQuestions(ids)
+                  .then(() => {
+                    setRecoveryItems((items) =>
+                      items.filter((item) => !selectedRecovery.has(item.id)),
+                    );
+                    setSelectedRecovery(new Set());
+                    toast.success("Selected recovery items permanently deleted.");
+                  })
+                  .catch((error) =>
+                    toast.error(
+                      error instanceof Error
+                        ? error.message
+                        : "Recovery items could not be deleted.",
+                    ),
+                  )
+                  .finally(() => setRecoveryBusy(false));
+              }}
+            >
+              <Trash2 className="h-4 w-4" /> Permanently delete
+            </Button>
+            <AlertDialogCancel>Close</AlertDialogCancel>
+            <Button
+              disabled={!selectedRecovery.size || recoveryBusy}
+              onClick={() => {
+                const ids = [...selectedRecovery];
+                setRecoveryBusy(true);
+                void restoreRecoveryQuestions(ids)
+                  .then(() => {
+                    setRecoveryItems((items) =>
+                      items.filter((item) => !selectedRecovery.has(item.id)),
+                    );
+                    setSelectedRecovery(new Set());
+                    toast.success("Selected questions restored.");
+                  })
+                  .catch((error) =>
+                    toast.error(
+                      error instanceof Error ? error.message : "Questions could not be restored.",
+                    ),
+                  )
+                  .finally(() => setRecoveryBusy(false));
+              }}
+            >
+              <ArchiveRestore className="h-4 w-4" /> Restore selected
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

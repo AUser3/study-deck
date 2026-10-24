@@ -20,12 +20,16 @@ export {
   importQuestions,
   normalizeQuestion,
   updateQuestion,
+  togglePinned,
 } from "./client/questions";
 export {
   exportDataBackup,
   getState,
   importDataBackup,
+  listRecoveryQuestions,
+  restoreRecoveryQuestions,
+  deleteRecoveryQuestions,
   openDataDirectory,
   useAppState,
 } from "./client/state";
-export { createTopic, deleteTopic, renameTopic } from "./client/topics";
+export { createTopic, deleteTopic, renameTopic, toggleTopicFavorite } from "./client/topics";

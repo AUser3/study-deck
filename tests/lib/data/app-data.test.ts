@@ -123,6 +123,39 @@ describe("application-data repository", () => {
     ).toEqual({ schemaVersion: 1, courses: [] });
   });
 
+  it("archives and restores deleted questions in batches", async () => {
+    const data = await repository();
+    const question = {
+      id: "question-1",
+      courseId: "course-1",
+      topicId: "topic-1",
+      text: "What is REST?",
+      choices: ["A protocol", "A database"],
+      correctIndices: [0],
+      answer: "A protocol",
+      createdAt: 3,
+    };
+    const state: AppState = {
+      version: APP_STATE_VERSION,
+      courses: [{ id: "course-1", name: "Web", createdAt: 1 }],
+      topics: [{ id: "topic-1", courseId: "course-1", name: "APIs", createdAt: 2 }],
+      questions: [question],
+      attempts: [],
+      notes: [],
+      oldExams: [],
+    };
+    await data.save(state);
+    await data.save({ ...state, questions: [] });
+
+    await expect(data.listRecoveryQuestions()).resolves.toMatchObject([
+      { id: question.id, question },
+    ]);
+    await expect(data.restoreRecoveryQuestions([question.id])).resolves.toMatchObject({
+      questions: [question],
+    });
+    await expect(data.listRecoveryQuestions()).resolves.toEqual([]);
+  });
+
   it("rejects attempts that point at missing questions", async () => {
     const data = await repository();
     await expect(

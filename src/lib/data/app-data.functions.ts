@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 
 import type { DocumentUpload } from "./managed-documents.server";
-import type { AppState, ManagedDocument } from "./types";
+import type { AppState, ManagedDocument, RecoveryQuestion } from "./types";
 
 export const loadStudyData = createServerFn({ method: "GET" }).handler(async () => {
   const { appDataRepository } = await import("./app-data.server");
@@ -52,3 +52,24 @@ export const openStudyDataDirectory = createServerFn({ method: "POST" }).handler
   const { openAppDataDirectory } = await import("./open-data-directory.server");
   await openAppDataDirectory();
 });
+
+export const listRecoveryQuestions = createServerFn({ method: "GET" }).handler(
+  async (): Promise<RecoveryQuestion[]> => {
+    const { appDataRepository } = await import("./app-data.server");
+    return appDataRepository.listRecoveryQuestions();
+  },
+);
+
+export const restoreRecoveryQuestions = createServerFn({ method: "POST" })
+  .validator((data: string[]) => data)
+  .handler(async ({ data }) => {
+    const { appDataRepository } = await import("./app-data.server");
+    return appDataRepository.restoreRecoveryQuestions(data);
+  });
+
+export const deleteRecoveryQuestions = createServerFn({ method: "POST" })
+  .validator((data: string[]) => data)
+  .handler(async ({ data }) => {
+    const { appDataRepository } = await import("./app-data.server");
+    await appDataRepository.deleteRecoveryQuestions(data);
+  });

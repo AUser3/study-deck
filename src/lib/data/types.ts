@@ -15,6 +15,7 @@ export interface Topic {
   courseId: ID;
   name: string;
   createdAt: number;
+  favorite?: boolean;
 }
 
 export interface Question {
@@ -29,7 +30,14 @@ export interface Question {
   /** Expected answer. For choice questions this lists all correct choices. */
   answer: string;
   explanation?: string;
+  pinned?: boolean;
   createdAt: number;
+}
+
+export interface RecoveryQuestion {
+  id: ID;
+  deletedAt: number;
+  question: Question;
 }
 
 export type StudyMode = "mc" | "typed";

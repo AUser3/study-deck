@@ -1,8 +1,26 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { AlertCircle, FileUp, FolderPlus, Layers, Pencil, Play, Plus, Trash2 } from "lucide-react";
+import {
+  AlertCircle,
+  FileUp,
+  FolderPlus,
+  Layers,
+  MoreHorizontal,
+  Pencil,
+  Play,
+  Plus,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AppShell } from "@/components/app-shell";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -21,6 +39,7 @@ import {
   createTopic,
   deleteTopic,
   renameTopic,
+  toggleTopicFavorite,
   updateCourse,
   useAppState,
 } from "@/lib/data/store";
@@ -28,7 +47,13 @@ import { attemptsByQuestion, computeProgress, pct } from "@/lib/data/progress";
 import type { StudyMode, Topic } from "@/lib/data/types";
 
 /** Topics, progress, and course actions for one course. */
-export function CoursePage({ courseId }: { courseId: string }) {
+export function CoursePage({
+  courseId,
+  favoriteOnly = false,
+}: {
+  courseId: string;
+  favoriteOnly?: boolean;
+}) {
   const s = useAppState();
   const navigate = useNavigate();
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -36,16 +61,18 @@ export function CoursePage({ courseId }: { courseId: string }) {
   const [newTopic, setNewTopic] = useState(false);
   const [renaming, setRenaming] = useState<Topic | null>(null);
   const [deleting, setDeleting] = useState<Topic | null>(null);
+  const [unfavoriting, setUnfavoriting] = useState<Topic | null>(null);
   const [editCourse, setEditCourse] = useState(false);
   const [addingQTopic, setAddingQTopic] = useState<Topic | null>(null);
 
   const course = s?.courses.find((c) => c.id === courseId);
   const topics = useMemo(
     () =>
-      [...(s?.topics.filter((t) => t.courseId === courseId) ?? [])].sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
-      ),
-    [s, courseId],
+      [
+        ...(s?.topics.filter((t) => t.courseId === courseId && (!favoriteOnly || t.favorite)) ??
+          []),
+      ].sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: "base" })),
+    [s, courseId, favoriteOnly],
   );
   const byQ = useMemo(() => attemptsByQuestion(s?.attempts ?? []), [s]);
 
@@ -126,13 +153,13 @@ export function CoursePage({ courseId }: { courseId: string }) {
           </Button>
         </div>
       </div>
-      <CourseSectionNav courseId={courseId} active="overview" />
+      <CourseSectionNav courseId={courseId} active={favoriteOnly ? "favourites" : "overview"} />
 
       {topics.length === 0 ? (
         <div className="mt-8">
           <EmptyState
             icon={<Layers className="h-6 w-6" />}
-            title="This course has no topics yet"
+            title={favoriteOnly ? "No favourite topics yet" : "This course has no topics yet"}
             actions={
               <>
                 <Button onClick={() => setNewTopic(true)}>
@@ -146,8 +173,9 @@ export function CoursePage({ courseId }: { courseId: string }) {
               </>
             }
           >
-            Topics group your questions. Create one manually, or import questions — topics named in
-            the import are created for you.
+            {favoriteOnly
+              ? "Click the star beside a topic on the course overview to save it here."
+              : "Topics group your questions. Create one manually, or import questions — topics named in the import are created for you."}
           </EmptyState>
         </div>
       ) : (
@@ -218,6 +246,23 @@ export function CoursePage({ courseId }: { courseId: string }) {
                       </div>
                     </div>
                     <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={
+                        t.favorite
+                          ? `Remove ${t.name} from favourites`
+                          : `Add ${t.name} to favourites`
+                      }
+                      onClick={() =>
+                        t.favorite ? setUnfavoriting(t) : void toggleTopicFavorite(t.id, true)
+                      }
+                    >
+                      <Star
+                        className={t.favorite ? "text-warning" : "text-muted-foreground"}
+                        fill={t.favorite ? "currentColor" : "none"}
+                      />
+                    </Button>
+                    <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setAddingQTopic(t)}
@@ -225,22 +270,35 @@ export function CoursePage({ courseId }: { courseId: string }) {
                     >
                       <Plus className="h-4 w-4" /> Add question
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Rename ${t.name}`}
-                      onClick={() => setRenaming(t)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label={`Delete ${t.name}`}
-                      onClick={() => setDeleting(t)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label={`Actions for ${t.name}`}>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => setRenaming(t)}>
+                          <Pencil className="h-4 w-4" /> Change topic name
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            navigate({
+                              to: "/courses/$courseId/topics/$topicId",
+                              params: { courseId, topicId: t.id },
+                            })
+                          }
+                        >
+                          <Layers className="h-4 w-4" /> View questions
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onSelect={() => setDeleting(t)}
+                        >
+                          <Trash2 className="h-4 w-4" /> Delete topic
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </li>
                 );
               })}
@@ -312,6 +370,16 @@ export function CoursePage({ courseId }: { courseId: string }) {
         onSubmit={async (n) => {
           await renameTopic(renaming!.id, n);
           setRenaming(null);
+        }}
+      />
+      <ConfirmDialog
+        open={!!unfavoriting}
+        onOpenChange={(o) => !o && setUnfavoriting(null)}
+        title="Remove topic from favourites?"
+        description={unfavoriting?.name}
+        onConfirm={async () => {
+          await toggleTopicFavorite(unfavoriting!.id, false);
+          setUnfavoriting(null);
         }}
       />
       <ConfirmDialog

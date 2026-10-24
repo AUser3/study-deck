@@ -5,11 +5,14 @@ import {
   loadStudyData,
   openStudyDataDirectory,
   restoreStudyBackup,
+  listRecoveryQuestions as listRecoveryQuestionsFn,
+  restoreRecoveryQuestions as restoreRecoveryQuestionsFn,
+  deleteRecoveryQuestions as deleteRecoveryQuestionsFn,
   saveStudyData,
 } from "../app-data.functions";
 import { EMPTY_CATALOG } from "../catalog";
 import { APP_STATE_VERSION } from "../types";
-import type { AppState } from "../types";
+import type { AppState, RecoveryQuestion } from "../types";
 
 const EMPTY: AppState = { version: APP_STATE_VERSION, ...EMPTY_CATALOG, attempts: [] };
 const SERVER_STATE: AppState & { __server?: true } = { ...EMPTY, __server: true };
@@ -107,4 +110,17 @@ export function importDataBackup(raw: string): Promise<void> {
     loadError = null;
     emitState();
   });
+}
+
+export const listRecoveryQuestions = (): Promise<RecoveryQuestion[]> => listRecoveryQuestionsFn();
+
+export function restoreRecoveryQuestions(ids: string[]): Promise<void> {
+  return enqueue(async () => {
+    state = await restoreRecoveryQuestionsFn({ data: ids });
+    emitState();
+  });
+}
+
+export function deleteRecoveryQuestions(ids: string[]): Promise<void> {
+  return deleteRecoveryQuestionsFn({ data: ids });
 }
